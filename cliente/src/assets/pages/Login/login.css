@@ -1,0 +1,80 @@
+/* Fuente general */
+body {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  color: white;
+}
+
+/* Contenedor principal centrado */
+.contenedor-principal {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  position: relative;
+  z-index: 1; /* para estar sobre el overlay y el video */
+}
+
+/* Video de fondo */
+.bg_video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -2;
+}
+
+/* Capa oscura sobre el video */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.445); /* oscurece el video */
+  z-index: -1;
+}
+
+/* Tarjeta de login centrada */
+span {
+  color: #73ba73;
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column; /* 👈 apila el título y el form */
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card h2 {
+  text-align: center;
+  margin: 1.5rem;
+  color: #ffffff;
+}
+
+.titulo {
+  margin-bottom: 15rem; /* espacio entre el título y el form */
+}
+
+h1 {
+  display: flex; /* 👈 título arriba, formulario abajo */
+  justify-content: center;
+  align-items: center; /* ← esto faltaba */
+  color: #ffffff; /* blanco sobre el overlay */
+  font-size: 2rem; /* tamaño grande */
+  margin-bottom: 4rem; /* separa del formulario */
+  font-weight: 700;
+}
+
+.formulario {
+  margin-bottom: 30vh;
+}
+/* Si tu Form usa styled-components, no hace falta más CSS aquí */
+/* Solo asegúrate que los inputs y botones tengan estilos dentro de Form */
