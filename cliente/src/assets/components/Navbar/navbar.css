@@ -1,6 +1,6 @@
 /* Navbar principal */
 .navbar {
-  background-color: #3eb489;
+  background-color: #2c9971;
   color: white;
   position: fixed;
   top: 0;
@@ -25,8 +25,8 @@
 
 /* Logo */
 .logo {
-  width: 6rem;
-  height: 2.3rem;
+  width: 3.6rem;
+  height: 3.5rem;
   margin-right: 4rem;
 }
 
@@ -62,6 +62,7 @@
 .sidebar-logo {
   width: 2.5rem;
   height: auto;
+  margin-left: 1rem;
 }
 
 .sidebar-title {
@@ -70,7 +71,7 @@
   font-size: 1.2rem;
   font-weight: bold;
   line-height: 1.1;
-  margin-left: 2.3rem;
+  margin-left: 1.2rem;
 }
 
 .sidebar-title .medical {
