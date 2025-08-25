@@ -3,55 +3,67 @@ import styled from "styled-components";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase.js";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx"; // <-- usamos el contexto
 
-const Form = () => {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
+
+  const { setUser, setClaims } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-    //para manejar el estado del login
-    e.preventDefault(); // evita refresco de página
+    e.preventDefault();
+    setError(null);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      setError("");
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      // Forzar refresh token para obtener claims
+      const tokenResult = await userCredential.user.getIdTokenResult(true);
+
+      // Actualizamos el contexto
+      setUser(userCredential.user);
+      setClaims(tokenResult.claims);
+
+      // Redirigimos al dashboard/inicio
       navigate("/inicio");
     } catch (err) {
-      if (err.code === "auth/invalid-email") {
-        setError("El correo no es valido");
-      } else if (err.code === "auth/user-not-found") {
-        setError("El usuario no fue encontrado");
-      } else if (err.code === "auth/wrong-password") {
-        setError("La contraseña es incorrecta");
+      if (
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found"
+      ) {
+        setError("Correo o contraseña incorrecta, vuelva a intentarlo");
+      } else if (err.code === "auth/invalid-email") {
+        setError("Correo inválido, vuelva a intentarlo");
       } else {
-        setError("Error al iniciar sesión. Intente nuevamente.");
+        setError(err.message);
       }
     }
   };
+
   return (
     <StyledWrapper>
       <div className="container">
-        <input type="checkbox" id="signup_toggle" />
         <form className="form" onSubmit={handleLogin}>
-          {" "}
           <div className="form_front">
             <div className="form_details">Iniciar Sesión</div>
+
             <label>Correo Electronico:</label>
             <input
               placeholder="Correo Electronico"
               className="input"
               type="email"
-              value={
-                email
-              } /*se le agrega la variable , que va a guardar la info del input en este caso email, para que luego el estado de email sea actualizado */
-              onChange={(e) =>
-                setEmail(e.target.value)
-              } /*se actualiza el estado de email y pasa a tener datos*/
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
-            <label>Contraseña:</label>
 
+            <label>Contraseña:</label>
             <input
               placeholder="Contraseña"
               className="input"
@@ -59,20 +71,19 @@ const Form = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+
             <button className="btn" type="submit">
               Entrar
             </button>
+
             {error && (
               <p
-                style={{
-                  textAlign: "center",
-                  color: "rgba(235, 91, 103, 1)",
-                  fontSize: "1rem",
-                }}
+                style={{ color: "rgba(235, 91, 103, 1)", textAlign: "center" }}
               >
                 {error}
               </p>
             )}
+
             <span className="switch">
               En caso de no tener cuenta, contactese con su administrador
             </span>
@@ -81,7 +92,7 @@ const Form = () => {
       </div>
     </StyledWrapper>
   );
-};
+}
 
 const StyledWrapper = styled.div`
   .container {
@@ -225,5 +236,3 @@ const StyledWrapper = styled.div`
     font-weight: 700;
   }
 `;
-
-export default Form;
