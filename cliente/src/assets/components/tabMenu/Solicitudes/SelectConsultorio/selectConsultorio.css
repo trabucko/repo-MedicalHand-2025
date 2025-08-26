@@ -1,0 +1,132 @@
+/* Estilos del contenedor principal */
+.consultorio-container {
+  padding: 1.5rem;
+  background-color: #f7fafc; /* Color de fondo más suave */
+  border-radius: 12px;
+}
+
+/* Encabezado del panel de consultorios */
+.consultorio-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  border-bottom: 1px solid #eef2f6;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: #4a5568;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: #3182ce; /* Azul para el hover */
+}
+
+.back-icon {
+  font-size: 1.2rem;
+}
+
+/* Lista de consultorios como una cuadrícula */
+.consultorio-list-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.consultorio-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(3, 1fr));
+  gap: 1.5rem;
+}
+
+/* Estilos de cada tarjeta de consultorio */
+.consultorio-list-item {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 1rem 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.consultorio-list-item.available {
+  border-left: 5px solid #48bb78; /* Verde para disponible */
+  cursor: pointer;
+}
+
+.consultorio-list-item.available:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+.consultorio-list-item.unavailable {
+  border-left: 5px solid #e53e3e; /* Rojo para no disponible */
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.consultorio-list-item.unavailable:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.consultorio-icon-wrapper {
+  font-size: 2rem;
+  color: #4a5568;
+  margin-right: 1rem;
+}
+
+.consultorio-details {
+  flex-grow: 1;
+}
+
+.consultorio-number {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0;
+}
+
+.consultorio-status {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  color: #718096;
+}
+
+.medico-asignado {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #4a5568;
+  font-style: italic;
+}
+
+.consultorio-action {
+  margin-left: auto;
+}
+
+.select-button {
+  background-color: #48bb78;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.select-button:hover {
+  background-color: #38a169;
+}

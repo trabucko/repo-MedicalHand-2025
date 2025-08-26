@@ -1,6 +1,6 @@
 /* Navbar principal */
 .navbar {
-  background-color: #2c9971;
+  background-color: #0d3b65;
   color: white;
   position: fixed;
   top: 0;
@@ -79,7 +79,7 @@
 }
 
 .sidebar-title .hand {
-  color: #3eb489; /* azul marino */
+  color: #0a6783; /* azul marino */
 }
 
 /* Sidebar */

@@ -1,0 +1,262 @@
+/* Contenedor principal para el área de contenido */
+.content-area {
+  padding: 2rem;
+  background-color: #f7f9fc;
+  min-height: 71vh;
+}
+
+/* Título */
+.solicitudes-title {
+  text-align: center;
+  border-bottom: 1px solid #1e5197;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e5197;
+  padding-bottom: 1.5rem;
+  margin: 0 0 1.7rem 4rem;
+  letter-spacing: -0.5px;
+}
+
+/* Lista de solicitudes */
+.solicitudes-list {
+  list-style: none;
+  padding: 0 3rem;
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Sombra sutil */
+}
+
+/* Elementos de la lista (cada solicitud) */
+.solicitud-list-item {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid #eef2f6;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+/* Elimina el borde inferior del último elemento */
+.solicitud-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Efecto de hover mejorado */
+.solicitud-list-item:hover {
+  background-color: #fcfdfe;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Sombra de elevación */
+}
+
+/* Borde de color al pasar el cursor (se desliza desde la izquierda) */
+.solicitud-list-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background-color: #3b82f6;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.2s ease-in-out;
+}
+
+.solicitud-list-item:hover::before {
+  transform: scaleY(1);
+}
+
+/* Badge de estado */
+.list-item-badge {
+  flex-shrink: 0;
+  margin-right: 2.5rem; /* Más espacio */
+}
+
+.list-item-badge span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #3b82f6;
+  background-color: #e5f2ff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Contenido de la solicitud */
+.list-item-content {
+  flex-grow: 1;
+}
+
+.list-item-content h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Ícono del usuario */
+.list-item-icon {
+  margin-right: 12px;
+  color: #7c97c9;
+}
+
+/* Detalles de la solicitud */
+.list-item-details {
+  margin-top: 4px; /* Menos espacio entre el título y los detalles */
+  font-size: 0.9rem;
+  color: #6c7380;
+}
+
+/* Estilos para el contenedor de filtros y el botón */
+/* Estilos para el contenedor de filtros y el botón */
+.filter-container {
+  display: flex;
+  justify-content: space-between; /* This will push elements to opposite ends */
+  align-items: center;
+  padding: 0 3rem 2rem;
+}
+
+.filter-container .left-side-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Estilos para el botón de filtro */
+.filter-button {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.filter-button:hover {
+  background-color: #2563eb;
+}
+
+/* Estilos para los tags de filtros activos */
+.active-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter-tag {
+  background-color: #e5f2ff;
+  color: #3b82f6;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  transition: all 0.2s ease;
+}
+
+.filter-tag:hover {
+  background-color: #d1e5f9;
+}
+
+.filter-tag svg {
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: #1e5197;
+}
+
+/* Estilos para el overlay del modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Estilos para la ventana modal */
+.modal-content {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 450px;
+  animation: modal-fade-in 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eef2f6;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.modal-close-icon {
+  font-size: 1.2rem;
+  color: #a0aec0;
+  cursor: pointer;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #4a5568;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.filter-group select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #eef2f6;
+  font-size: 1rem;
+  color: #1f2937;
+  cursor: pointer;
+  appearance: none; /* Elimina los estilos nativos */
+  background: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23a0aec0"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>')
+    no-repeat right 12px center;
+  background-size: 1.2rem;
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

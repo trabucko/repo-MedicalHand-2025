@@ -1,0 +1,63 @@
+.tab-section {
+  margin-top: 10vh;
+  font-family: Arial, sans-serif;
+  max-width: 95%; /* caja contenedora */
+  min-height: 80vh;
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  border: 1px solid #1d69cc00;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #dde0e2;
+}
+
+/* Lista de pestañas */
+.tab-menu-tabs {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid #1a427e;
+}
+
+/* Cada item ocupa el mismo espacio */
+.tab-menu-item {
+  flex: 1;
+}
+
+/* Estilo de pestañas cuadradas */
+.tab-menu-link {
+  text-align: center;
+  padding: 15px 0;
+  cursor: pointer;
+  color: #8b8c8d;
+  font-size: 1rem;
+  border-right: 1px solid #944343;
+  background: #212222;
+  transition: all 0.2s ease-in-out;
+}
+
+.tab-menu-link:last-child {
+  border-right: none;
+}
+
+.tab-menu-link:hover {
+  background: #0f2e5c;
+  color: #b7bdce;
+}
+
+/* Activa */
+.tab-menu-link.active {
+  background: #2f5f9c;
+  color: white;
+  font-weight: bold;
+}
+
+/* Contenido */
+.tab-content {
+  padding: 20px;
+  font-size: 1rem;
+  color: #202124;
+}
