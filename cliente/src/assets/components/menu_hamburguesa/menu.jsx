@@ -27,7 +27,7 @@ const Wrapper = styled.div`
     background: #fff;
     border-radius: 2px;
     transition: all 0.3s ease;
-    margin-left: 70%;
+    margin-left: 40%;
   }
 
   &.open span:nth-child(1) {

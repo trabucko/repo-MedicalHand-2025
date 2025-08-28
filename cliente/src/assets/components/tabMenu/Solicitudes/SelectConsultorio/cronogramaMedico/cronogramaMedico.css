@@ -1,0 +1,111 @@
+/* src/components/CronogramaMedico.css */
+
+.cronograma-container {
+  padding: 2rem;
+  background-color: #f7f9fc;
+  min-height: 71vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cronograma-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eef2f6;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #3b82f6;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: #2563eb;
+}
+
+.back-icon {
+  font-size: 1.2rem;
+}
+
+.cronograma-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.day-schedule {
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.day-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.time-slot {
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #eef2f6;
+}
+
+.time-slot p {
+  margin: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+/* Estados */
+.time-slot.disponible {
+  background-color: #e8f5e9;
+  border: 1px solid #34d399;
+  color: #065f46;
+}
+
+.time-slot.disponible:hover {
+  background-color: #d1fae5;
+  transform: scale(1.05);
+}
+
+.time-slot.ocupado {
+  background-color: #fee2e2;
+  border: 1px solid #f87171;
+  color: #991b1b;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.slot-time {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.slot-status {
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.slot-patient {
+  font-size: 0.8rem;
+  color: #374151;
+}

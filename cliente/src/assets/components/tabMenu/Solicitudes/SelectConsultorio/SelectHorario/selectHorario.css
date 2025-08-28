@@ -1,0 +1,122 @@
+/* src/components/SelectHorario.css */
+
+.main-container {
+  padding: 0rem;
+  background-color: #f7f9fc;
+  display: flex;
+  flex-direction: column;
+  padding: 0 1rem;
+}
+.horario-title {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  margin-top: -1rem;
+  margin-left: -0.5rem;
+  color: #0c4f8d;
+}
+.cronograma {
+  display: flex;
+
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+.back-link {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #3b82f6;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.back-link .back-icon {
+  margin-right: 8px;
+}
+
+/* Contenedor principal para el layout de dos columnas */
+.horario-container {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Lado Izquierdo: Sección de Datos del Paciente */
+.patient-info-section {
+  flex: 1;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.patient-info-section h2 {
+  color: #1e5197;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.patient-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.selected-consultorio-info,
+.selected-slot-info {
+  background-color: #e5f2ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.selected-consultorio-info h3,
+.selected-slot-info p {
+  margin: 0;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Lado Derecho: Calendario */
+.big-calendar-container {
+  flex: 3;
+  padding: 1rem;
+  width: 100%;
+  height: 50%;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Estilos de los eventos del calendario */
+.rbc-event {
+  border-color: #3b82f6;
+  border-radius: 4px;
+}
+
+.rbc-event.booked-event {
+  background-color: #ef4444;
+  border-color: #dc2626;
+  opacity: 0.85;
+}
+
+.rbc-event.available-event {
+  background-color: #22c55e;
+  border-color: #16a34a;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.rbc-event.available-event:hover {
+  opacity: 1;
+}
+
+.MuiButton-root {
+  width: 100%;
+}

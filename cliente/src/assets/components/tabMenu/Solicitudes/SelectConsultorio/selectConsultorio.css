@@ -1,7 +1,13 @@
-/* Estilos del contenedor principal */
+/*
+    ============================================
+    Estilos base (MÓVIL FIRST)
+    ============================================
+*/
+
+/* Contenedor principal para el área de contenido */
 .consultorio-container {
-  padding: 1.5rem;
-  background-color: #f7fafc; /* Color de fondo más suave */
+  padding: 1rem;
+  background-color: #f7fafc;
   border-radius: 12px;
 }
 
@@ -13,6 +19,16 @@
   border-bottom: 1px solid #eef2f6;
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.consultorio-title {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  font-size: 0.9rem;
+  margin-top: -1rem;
+  color: #0c4f8d;
 }
 
 .back-link {
@@ -27,7 +43,7 @@
 }
 
 .back-link:hover {
-  color: #3182ce; /* Azul para el hover */
+  color: #3182ce;
 }
 
 .back-icon {
@@ -36,7 +52,7 @@
 
 /* Lista de consultorios como una cuadrícula */
 .consultorio-list-container {
-  max-height: 400px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -45,7 +61,7 @@
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(3, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(1fr, 1fr));
   gap: 1.5rem;
 }
 
@@ -61,7 +77,7 @@
 }
 
 .consultorio-list-item.available {
-  border-left: 5px solid #48bb78; /* Verde para disponible */
+  border-left: 5px solid #48bb78;
   cursor: pointer;
 }
 
@@ -71,9 +87,9 @@
 }
 
 .consultorio-list-item.unavailable {
-  border-left: 5px solid #e53e3e; /* Rojo para no disponible */
+  border-left: 5px solid #e53e3e;
   opacity: 0.7;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .consultorio-list-item.unavailable:hover {
@@ -92,14 +108,14 @@
 }
 
 .consultorio-number {
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #1a202c;
   margin: 0;
 }
 
 .consultorio-status {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 500;
   margin-top: 0.25rem;
   color: #718096;
@@ -116,6 +132,7 @@
   margin-left: auto;
 }
 
+/* Ocultar el botón por defecto */
 .select-button {
   background-color: #48bb78;
   color: white;
@@ -124,9 +141,45 @@
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.3s ease;
+  font-size: 0.6rem;
+  opacity: 0; /* Lo hacemos invisible */
+  pointer-events: none; /* Desactiva los eventos de clic cuando está invisible */
+}
+
+/* Mostrar el botón solo al hacer hover en el elemento padre */
+.consultorio-list-item.available:hover .select-button {
+  opacity: 1; /* Lo volvemos visible */
+  pointer-events: auto; /* Reactiva los eventos de clic */
 }
 
 .select-button:hover {
   background-color: #38a169;
+}
+
+/* Media Queries para Responsividad */
+@media (min-width: 768px) {
+  .consultorio-list {
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(1fr, 1fr)
+    ); /* Ajuste para desktop */
+  }
+
+  .consultorio-number {
+    font-size: 1.1rem;
+  }
+
+  .consultorio-status {
+    font-size: 0.9rem;
+  }
+
+  .medico-asignado {
+    font-size: 0.8rem;
+  }
+
+  .select-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.8rem; /* Ajuste para desktop */
+  }
 }

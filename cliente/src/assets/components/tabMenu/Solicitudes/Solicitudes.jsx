@@ -100,16 +100,18 @@ const Solicitud = () => {
            {" "}
       <h2 className="solicitudes-title">
                {" "}
-        {showConsultorioModal
-          ? "Seleccionar Consultorio"
-          : "Bandeja de Consultas Médica Entrantes"}
-             {" "}
+        {showConsultorioModal ? "" : "Bandeja de Consultas Médica Entrantes"}   
+         {" "}
       </h2>
       {showConsultorioModal ? (
         <SelectConsultorio onClose={handleCloseConsultorioModal} />
       ) : (
         <>
           <div className="filter-container">
+            <button className="filter-button" onClick={toggleModal}>
+              <FaFilter /> Filtrar
+            </button>
+
             <div className="active-filters">
               {Object.entries(activeFilters).map(([key, value]) => (
                 <div key={key} className="filter-tag">
@@ -118,9 +120,6 @@ const Solicitud = () => {
                 </div>
               ))}
             </div>
-            <button className="filter-button" onClick={toggleModal}>
-              <FaFilter /> Filtrar
-            </button>
           </div>
 
           <ul className="solicitudes-list">

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./Navbar.css";
+import { useNavigate } from "react-router-dom";
+
 import logo from "../../../assets/img/logo_blanco.png";
 import Hamburguer from "../menu_hamburguesa/menu.jsx";
 import { FaHistory, FaUserCog, FaSignOutAlt, FaHospital } from "react-icons/fa";
@@ -13,14 +15,14 @@ import {
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import app from "../../../firebase.js";
-import { useAuth } from "../../context/AuthContext.jsx"; // Importar el contexto
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const db = getFirestore(app);
 const auth = getAuth();
 
-const Navbar = ({ navigate }) => {
-  // Quitar handleLogout de las props
-  const { claims, logout } = useAuth(); // Obtener logout del contexto
+const Navbar = () => {
+  const navigate = useNavigate();
+  const { claims, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [hospitalName, setHospitalName] = useState("Nombre del hospital");
   const [fullName, setFullName] = useState("Nombre usuario");
@@ -30,11 +32,11 @@ const Navbar = ({ navigate }) => {
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
-  // Función para manejar el cierre de sesión
   const handleLogout = async () => {
     try {
-      await logout(); // Usar el método logout del contexto
-      navigate("/login"); // Redirigir a la página de login
+      await logout();
+      // Redirige a la ruta principal, que es tu página de inicio de sesión.
+      navigate("/");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }
@@ -43,7 +45,6 @@ const Navbar = ({ navigate }) => {
   // Obtener hospital
   useEffect(() => {
     if (!claims?.hospitalId) return;
-
     const fetchHospital = async () => {
       try {
         const docRef = doc(db, "hospitales_MedicalHand", claims.hospitalId);
@@ -55,7 +56,6 @@ const Navbar = ({ navigate }) => {
         console.error("Error obteniendo hospital:", err);
       }
     };
-
     fetchHospital();
   }, [claims?.hospitalId]);
 
@@ -63,22 +63,18 @@ const Navbar = ({ navigate }) => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (!user) return;
-
       console.log("Usuario autenticado:", user);
-
       try {
         const querySnapshot = await getDocs(
           collection(db, "usuarios_hospitales")
         );
         let foundUser = null;
-
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.email === user.email) {
             foundUser = data;
           }
         });
-
         if (foundUser) {
           const name = foundUser.fullName;
           console.log("Nombre completo:", name);
@@ -93,7 +89,6 @@ const Navbar = ({ navigate }) => {
         console.error("Error obteniendo usuario:", err);
       }
     });
-
     return () => unsubscribe();
   }, []);
 
@@ -103,7 +98,6 @@ const Navbar = ({ navigate }) => {
         <div className="navbar-logo">
           <img src={logo} alt="Logo" className="logo" />
         </div>
-
         <div className="navbar-links">
           <a className="navbar-btn" onClick={() => navigate("/panel")}>
             Panel
@@ -120,10 +114,8 @@ const Navbar = ({ navigate }) => {
             </a>
           )}
         </div>
-
         <Hamburguer onClick={toggleMenu} isOpen={isOpen} />
       </div>
-
       <div className={`sidebar ${isOpen ? "open" : ""}`}>
         <div className="sidebar-header">
           <img src={logo} alt="Reportnic Logo" className="sidebar-logo" />
@@ -133,7 +125,6 @@ const Navbar = ({ navigate }) => {
             </span>
           </div>
         </div>
-
         <div className="sidebar-profile">
           <div className="user-info-item">
             <div className="info-icon">
@@ -144,7 +135,6 @@ const Navbar = ({ navigate }) => {
               <div className="info-value">{fullName}</div>
             </div>
           </div>
-
           <div className="user-info-item hospital">
             <div className="info-icon">
               <FaHospital className="sidebar-icon" />
@@ -154,7 +144,6 @@ const Navbar = ({ navigate }) => {
               <div className="info-value">{hospitalName}</div>
             </div>
           </div>
-
           <div className="user-info-item role">
             <div className="info-icon">
               <FaUserCog className="sidebar-icon" />
@@ -165,7 +154,6 @@ const Navbar = ({ navigate }) => {
             </div>
           </div>
         </div>
-
         <button className="sidebar-btn" onClick={() => navigate("/panel")}>
           <GiPc className="sidebar-icon" /> Panel
         </button>

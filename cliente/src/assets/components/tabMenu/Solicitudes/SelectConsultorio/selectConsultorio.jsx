@@ -1,8 +1,13 @@
-import React from "react";
+// src/components/SelectConsultorio.js
+
+import React, { useState } from "react";
 import "./selectConsultorio.css";
-import { FaUserMd, FaArrowLeft, FaHospital } from "react-icons/fa";
+import SelectHorario from "./SelectHorario/SelectHorario"; // Import the new component
+import { FaArrowLeft, FaHospital } from "react-icons/fa";
 
 const SelectConsultorio = ({ onClose }) => {
+  const [selectedConsultorio, setSelectedConsultorio] = useState(null);
+
   const consultorios = [
     { id: 1, numero: "101", estado: "Disponible", medico: null },
     { id: 2, numero: "102", estado: "No disponible", medico: "Dr. López" },
@@ -12,12 +17,42 @@ const SelectConsultorio = ({ onClose }) => {
     { id: 6, numero: "106", estado: "No disponible", medico: "Dr. Pérez" },
   ];
 
+  const handleSelectConsultorio = (cons) => {
+    if (cons.estado === "Disponible") {
+      setSelectedConsultorio(cons);
+    }
+  };
+
+  const handleBackToConsultorios = () => {
+    setSelectedConsultorio(null);
+  };
+
+  const handleConfirmAppointment = (appointmentDetails) => {
+    console.log("Cita confirmada:", appointmentDetails);
+    // You can add logic here to send this data to a backend or update the state
+    // For this example, we'll just go back to the list.
+    setSelectedConsultorio(null);
+  };
+
+  if (selectedConsultorio) {
+    return (
+      <SelectHorario
+        consultorio={selectedConsultorio}
+        onBack={handleBackToConsultorios}
+        onConfirm={handleConfirmAppointment}
+      />
+    );
+  }
+
   return (
     <div className="consultorio-container">
       <div className="consultorio-header">
         <div onClick={onClose} className="back-link">
           <FaArrowLeft className="back-icon" />
-          <span>Volver a la bandeja</span>
+        </div>
+
+        <div className="consultorio-title">
+          <h2>Seleccione un Consultorio</h2>
         </div>
       </div>
       <div className="consultorio-list-container">
@@ -28,6 +63,7 @@ const SelectConsultorio = ({ onClose }) => {
               className={`consultorio-list-item ${
                 cons.estado === "Disponible" ? "available" : "unavailable"
               }`}
+              onClick={() => handleSelectConsultorio(cons)}
             >
               <div className="consultorio-icon-wrapper">
                 <FaHospital />

@@ -1,46 +1,54 @@
+/* src/components/tabMenu.css */
+
+/* Estilos base (MÓVIL FIRST) */
 .tab-section {
-  margin-top: 10vh;
-  font-family: Arial, sans-serif;
-  max-width: 95%; /* caja contenedora */
+  margin: 5rem auto; /* Centra el contenedor y agrega espacio */
+  max-width: 95%;
   min-height: 80vh;
-  margin-left: auto;
-  margin-right: auto;
   background: #fff;
   border: 1px solid #1d69cc00;
   border-radius: 8px;
-  overflow: hidden;
   background-color: #dde0e2;
+}
+body {
+  overflow: scroll;
 }
 
 /* Lista de pestañas */
 .tab-menu-tabs {
   display: flex;
-  justify-content: center;
-  margin: 0;
-  padding: 0;
-  list-style: none;
   border-bottom: 1px solid #1a427e;
+  background: #212222;
+  justify-content: center;
+  list-style: none;
 }
 
-/* Cada item ocupa el mismo espacio */
 .tab-menu-item {
   flex: 1;
 }
 
-/* Estilo de pestañas cuadradas */
 .tab-menu-link {
+  flex-shrink: 0; /* Evita que las pestañas se encojan */
   text-align: center;
-  padding: 15px 0;
+  padding: 1rem 0.5rem;
   cursor: pointer;
   color: #8b8c8d;
-  font-size: 1rem;
+  font-size: 0.8rem; /* Tamaño de fuente más pequeño para móvil */
   border-right: 1px solid #944343;
-  background: #212222;
   transition: all 0.2s ease-in-out;
+  white-space: nowrap; /* Evita que el texto de la pestaña se rompa */
 }
 
+/* El último item no tiene borde a la derecha */
 .tab-menu-link:last-child {
   border-right: none;
+}
+
+/* Estilos activos y hover */
+.tab-menu-link.active {
+  background: #2f5f9c;
+  color: white;
+  font-weight: bold;
 }
 
 .tab-menu-link:hover {
@@ -48,16 +56,28 @@
   color: #b7bdce;
 }
 
-/* Activa */
-.tab-menu-link.active {
-  background: #2f5f9c;
-  color: white;
-  font-weight: bold;
-}
-
-/* Contenido */
+/* El contenido se verá bien por defecto */
 .tab-content {
-  padding: 20px;
+  padding: 20px 15px; /* Ajusta el padding para móviles */
   font-size: 1rem;
   color: #202124;
+}
+
+/*
+   ============================================
+   MEDIA QUERY para PANTALLAS GRANDES (Desktop)
+   ============================================
+*/
+@media (min-width: 769px) {
+  .tab-section {
+    max-width: 95%; /* Ahora puedes usar max-width para desktop */
+    margin: 10vh auto;
+  }
+
+  /* Permite que las pestañas crezcan para ocupar el espacio */
+  .tab-menu-link {
+    flex-shrink: 1;
+    font-size: 1rem;
+    padding: 15px 0; /* Puedes usar padding horizontal de 0 para distribuir el espacio uniformemente */
+  }
 }
