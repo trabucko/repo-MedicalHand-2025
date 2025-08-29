@@ -9,11 +9,16 @@ const SelectConsultorio = ({ onClose }) => {
   const [selectedConsultorio, setSelectedConsultorio] = useState(null);
 
   const consultorios = [
-    { id: 1, numero: "101", estado: "Disponible", medico: null },
+    { id: 1, numero: "101", estado: "Disponible", medico: "Dr. Juan Pérez" },
     { id: 2, numero: "102", estado: "No disponible", medico: "Dr. López" },
-    { id: 3, numero: "103", estado: "Disponible", medico: null },
+    { id: 3, numero: "103", estado: "Disponible", medico: "Dra. Ana García" },
     { id: 4, numero: "104", estado: "No disponible", medico: "Dra. García" },
-    { id: 5, numero: "105", estado: "Disponible", medico: null },
+    {
+      id: 5,
+      numero: "105",
+      estado: "Disponible",
+      medico: "Dr. Carlos Rodríguez",
+    },
     { id: 6, numero: "106", estado: "No disponible", medico: "Dr. Pérez" },
   ];
 
@@ -35,9 +40,15 @@ const SelectConsultorio = ({ onClose }) => {
   };
 
   if (selectedConsultorio) {
+    // You must provide the doctor prop to the SelectHorario component.
+    // We'll create a doctor object from the selected consultorio's medico property.
+    const doctorInfo = {
+      nombre: selectedConsultorio.medico,
+    };
     return (
       <SelectHorario
         consultorio={selectedConsultorio}
+        doctor={doctorInfo} // <--- This line fixes the error
         onBack={handleBackToConsultorios}
         onConfirm={handleConfirmAppointment}
       />

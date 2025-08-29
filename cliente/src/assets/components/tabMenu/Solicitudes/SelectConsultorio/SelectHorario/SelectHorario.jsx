@@ -3,34 +3,22 @@
 import React, { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import "./SelectHorario.css";
-
-// Importa los componentes de Material-UI
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { TextField } from "@mui/material";
-import Button from "@mui/material/Button";
-import FormControl from "@mui/material/FormControl";
-import InputLabel from "@mui/material/InputLabel";
-import OutlinedInput from "@mui/material/OutlinedInput";
-
-// Importa los componentes de react-big-calendar y moment
+import { Button, Modal, Box } from "@mui/material"; // Importa Modal y Box
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
-import "moment/locale/es"; // Asegúrate de importar el locale español para moment
+import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import ResumenCita from "../SelectHorario/resumenCita/resumenCita"; // Asegúrate de que la ruta sea correcta
 
-// Configura el localizador para moment en español
 moment.locale("es");
 const localizer = momentLocalizer(moment);
 
-const SelectHorario = ({ consultorio, onBack, onConfirm }) => {
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [patientName, setPatientName] = useState("");
-  const [patientId, setPatientId] = useState("");
+const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [currentView, setCurrentView] = useState("week");
   const [calendarDate, setCalendarDate] = useState(moment().toDate());
+  const [showModal, setShowModal] = useState(false); // Estado para el modal
+  const [citaConfirmadaData, setCitaConfirmadaData] = useState(null); // Estado para los datos de la cita
 
   const messages = {
     allDay: "Todo el día",
@@ -47,7 +35,6 @@ const SelectHorario = ({ consultorio, onBack, onConfirm }) => {
     noEventsInRange: "Sin eventos",
   };
 
-  // Datos de eventos de ejemplo.
   const myEventsList = [
     {
       title: "Cita con Dr. Smith",
@@ -78,47 +65,46 @@ const SelectHorario = ({ consultorio, onBack, onConfirm }) => {
   const handleSelectEvent = (event) => {
     if (event.isBookable) {
       setSelectedEvent(event);
-      alert(
-        `Has seleccionado el espacio disponible el ${moment(event.start).format(
-          "DD/MM/YYYY"
-        )} a las ${moment(event.start).format("HH:mm")}.`
-      );
     } else {
       alert("Este horario ya está reservado.");
       setSelectedEvent(null);
     }
   };
 
-  const handleConfirm = () => {
-    if (selectedEvent && patientName && patientId) {
+  const handleOpenModal = () => {
+    if (selectedEvent) {
       const formattedDate = moment(selectedEvent.start).format("DD/MM/YYYY");
       const formattedTime = moment(selectedEvent.start).format("HH:mm");
-      onConfirm({
+      const citaData = {
         consultorio,
-        paciente: {
-          nombre: patientName,
-          cedula: patientId,
-        },
+        doctor,
         fecha: formattedDate,
         hora: formattedTime,
-      });
+      };
+      setCitaConfirmadaData(citaData);
+      setShowModal(true);
     } else {
-      alert(
-        "Por favor, selecciona un horario y completa los datos del paciente."
-      );
+      alert("Por favor, selecciona un horario en el calendario.");
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleConfirmCita = () => {
+    // Aquí iría la lógica final de confirmación, por ejemplo, enviar a un backend
+    alert("¡Cita agendada con éxito!");
+    handleCloseModal();
+    onConfirm(citaConfirmadaData); // Llama a la prop onConfirm para actualizar el componente padre
   };
 
   const eventPropGetter = (event) => {
     if (event.isBooked) {
-      return {
-        className: "booked-event",
-      };
+      return { className: "booked-event" };
     }
     if (event.isBookable) {
-      return {
-        className: "available-event",
-      };
+      return { className: "available-event" };
     }
     return {};
   };
@@ -129,68 +115,58 @@ const SelectHorario = ({ consultorio, onBack, onConfirm }) => {
         <div onClick={onBack} className="back-link">
           <FaArrowLeft className="back-icon" />
         </div>
-
         <div className="horario-title">
           <h2>Programar la Cita</h2>
         </div>
       </div>
-
       <div className="horario-container">
-        {/* Lado Izquierdo: Datos del Paciente y Confirmación */}
         <div className="patient-info-section">
-          <h2>Datos de la Cita</h2>
           <div className="selected-consultorio-info">
-            <h3>Consultorio {consultorio.numero}</h3>
-            <p>Estado: {consultorio.estado}</p>
+            <h3>Información de la Cita</h3>
+            <p>
+              <span className="info-label">Doctor:</span> {doctor.nombre}
+            </p>
+            <p>
+              <span className="info-label">Consultorio:</span>{" "}
+              {consultorio.numero}
+            </p>
+            <p>
+              <span className="info-label">Estado:</span> {consultorio.estado}
+            </p>
           </div>
-
-          <div className="patient-form">
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Nombre del Paciente</InputLabel>
-              <OutlinedInput
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                label="Nombre del Paciente"
-              />
-            </FormControl>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Cédula/ID</InputLabel>
-              <OutlinedInput
-                value={patientId}
-                onChange={(e) => setPatientId(e.target.value)}
-                label="Cédula/ID"
-              />
-            </FormControl>
-          </div>
-
           <div className="selected-slot-info">
+            <h4>Detalles de la Cita</h4>
             {selectedEvent ? (
               <>
                 <p>
-                  **Fecha Seleccionada:**{" "}
+                  <span className="info-label">Fecha:</span>{" "}
                   {moment(selectedEvent.start).format("DD/MM/YYYY")}
                 </p>
                 <p>
-                  **Horario Seleccionado:**{" "}
+                  <span className="info-label">Horario:</span>{" "}
                   {moment(selectedEvent.start).format("HH:mm")}
                 </p>
               </>
             ) : (
-              <p>Selecciona un horario en el calendario.</p>
+              <p className="no-selection-message">
+                Selecciona un horario disponible en el calendario para
+                continuar.
+              </p>
             )}
           </div>
-
           <Button
             variant="contained"
-            onClick={handleConfirm}
-            disabled={!selectedEvent || !patientName || !patientId}
-            sx={{ mt: 3 }}
+            onClick={handleOpenModal}
+            disabled={!selectedEvent}
+            sx={{
+              mt: 3,
+              backgroundColor: "#1976d2",
+              "&:hover": { backgroundColor: "#115293" },
+            }}
           >
             Confirmar Cita
           </Button>
         </div>
-
-        {/* Lado Derecho: Calendario */}
         <div className="big-calendar-container">
           <Calendar
             localizer={localizer}
@@ -210,8 +186,21 @@ const SelectHorario = ({ consultorio, onBack, onConfirm }) => {
           />
         </div>
       </div>
+
+      {/* Modal para el resumen de la cita */}
+      <Modal open={showModal} onClose={handleCloseModal}>
+        <ResumenCita
+          appointmentDetails={citaConfirmadaData}
+          onConfirm={handleConfirmCita}
+          onBack={handleCloseModal}
+        />
+      </Modal>
     </div>
   );
 };
 
 export default SelectHorario;
+
+// src/components/SelectHorario.jsx
+
+// ... (resto de importaciones) ...

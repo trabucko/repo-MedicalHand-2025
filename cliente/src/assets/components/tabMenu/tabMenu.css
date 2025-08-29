@@ -71,7 +71,7 @@ body {
 @media (min-width: 769px) {
   .tab-section {
     max-width: 95%; /* Ahora puedes usar max-width para desktop */
-    margin: 10vh auto;
+    margin: 8vh auto;
   }
 
   /* Permite que las pestañas crezcan para ocupar el espacio */

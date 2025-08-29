@@ -14,6 +14,7 @@ import {
 import Login from "../src/assets/pages/Login/Login.jsx";
 import Inicio from "../src/assets/pages/Inicio/Inicio.jsx";
 import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
+import ResumenCita from "../src/assets/components/tabMenu/Solicitudes/SelectConsultorio/SelectHorario/resumenCita/resumenCita.jsx";
 
 function App() {
   return (
@@ -39,6 +40,15 @@ function App() {
               element={
                 <PrivateRoute>
                   <Inicio />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/resumen-cita"
+              element={
+                <PrivateRoute>
+                  <ResumenCita />
                 </PrivateRoute>
               }
             />

@@ -1,13 +1,14 @@
+// src/components/TabMenu.jsx
 import React, { useState } from "react";
 import "./tabMenu.css";
 import Solicitud from "./Solicitudes/Solicitudes";
-
+import Reprogramacion from "./Reprogramaciones/Reprogramacion"; // ✅ La importación ya está correcta
+import Cancelacion from "./Cancelacion/Cancelacion";
 const TabMenu = () => {
   const [activeTab, setActiveTab] = useState("Solicitud");
 
   return (
     <section className="tab-section">
-      {/* Pestañas cuadradas */}
       <ul className="tab-menu-tabs">
         <li className="tab-menu-item">
           <div
@@ -40,15 +41,11 @@ const TabMenu = () => {
           </div>
         </li>
       </ul>
-
-      {/* Contenido dinámico */}
-
       <div className="tab-content">
         {activeTab === "Solicitud" && <Solicitud />}
-        {activeTab === "Reprogramación" && (
-          <p>📅 Resultados de Reprogramación.</p>
-        )}
-        {activeTab === "Cancelación" && <p>❌ Resultados de Cancelación.</p>}
+        {activeTab === "Reprogramación" && <Reprogramacion />}{" "}
+        {/* ✅ Esto ya está bien */}
+        {activeTab === "Cancelación" && <Cancelacion />}
       </div>
     </section>
   );
