@@ -99,7 +99,7 @@ const Navbar = () => {
           <img src={logo} alt="Logo" className="logo" />
         </div>
         <div className="navbar-links">
-          <a className="navbar-btn" onClick={() => navigate("/panel")}>
+          <a className="navbar-btn" onClick={() => navigate("/ConsultaExt")}>
             Consulta Externa
           </a>
           <a className="navbar-btn" onClick={() => navigate("/historial")}>
@@ -154,7 +154,10 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-        <button className="sidebar-btn" onClick={() => navigate("/panel")}>
+        <button
+          className="sidebar-btn"
+          onClick={() => navigate("/ConsultaExt")}
+        >
           <GiPc className="sidebar-icon" /> Consula Externa
         </button>
         <button className="sidebar-btn" onClick={() => navigate("/historial")}>

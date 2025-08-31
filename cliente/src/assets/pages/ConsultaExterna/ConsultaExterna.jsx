@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Navbar from "../../components/Navbar/navbar";
 import Tabmenu from "../../components/tabMenu/TabMenu";
-function Inicio() {
+function ConsultaExterna() {
   return (
     <div>
       <header>
@@ -14,4 +14,4 @@ function Inicio() {
   );
 }
 
-export default Inicio;
+export default ConsultaExterna;

@@ -12,7 +12,7 @@ import {
   useLoading,
 } from "../src/assets/context/LoadingContext.jsx";
 import Login from "../src/assets/pages/Login/Login.jsx";
-import Inicio from "../src/assets/pages/Inicio/Inicio.jsx";
+import ConsultaExterna from "./assets/pages/ConsultaExterna/ConsultaExterna.jsx";
 import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
 import ResumenCita from "../src/assets/components/tabMenu/Solicitudes/SelectConsultorio/SelectHorario/resumenCita/resumenCita.jsx";
 
@@ -36,10 +36,10 @@ function App() {
               }
             />
             <Route
-              path="/Inicio"
+              path="/ConsultaExt"
               element={
                 <PrivateRoute>
-                  <Inicio />
+                  <ConsultaExterna />
                 </PrivateRoute>
               }
             />
@@ -83,7 +83,7 @@ function PublicRoute({ children }) {
     return <p>Cargando...</p>;
   }
   if (user) {
-    return <Navigate to="/Inicio" />;
+    return <Navigate to="/ConsultaExt" />;
   }
   return children;
 }
