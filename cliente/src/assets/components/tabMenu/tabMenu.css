@@ -44,7 +44,7 @@ body {
   border-right: none;
 }
 
-/* Estilos activos y hover */
+/* Estilos activos y hover genéricos */
 .tab-menu-link.active {
   background: #2f5f9c;
   color: white;
@@ -63,6 +63,17 @@ body {
   color: #202124;
 }
 
+/* Estilos específicos para la pestaña de reprogramación */
+/* Coloca estas reglas después de las reglas genéricas para que tengan prioridad */
+.tab-menu-tabs .reprogramacion-link:hover {
+  background-color: #6e2e0e; /* Color naranja en hover */
+  color: #fff;
+}
+
+.tab-menu-tabs .reprogramacion-link.active {
+  background-color: #c04000; /* Color naranja al hacer clic */
+}
+
 /*
    ============================================
    MEDIA QUERY para PANTALLAS GRANDES (Desktop)
@@ -76,7 +87,6 @@ body {
     height: 100vh;
   }
 
-  /* Permite que las pestañas crezcan para ocupar el espacio */
   .tab-menu-link {
     flex-shrink: 1;
     font-size: 1rem;
