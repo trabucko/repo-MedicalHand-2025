@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import "./SelectHorario.css";
-import { Button, Modal, Box } from "@mui/material"; // Importa Modal y Box
+import { Button, Modal, Box } from "@mui/material";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import ResumenCita from "../SelectHorario/resumenCita/resumenCita"; // Asegúrate de que la ruta sea correcta
+import ResumenCita from "../SelectHorario/resumenCita/resumenCita";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
@@ -17,8 +17,8 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [currentView, setCurrentView] = useState("week");
   const [calendarDate, setCalendarDate] = useState(moment().toDate());
-  const [showModal, setShowModal] = useState(false); // Estado para el modal
-  const [citaConfirmadaData, setCitaConfirmadaData] = useState(null); // Estado para los datos de la cita
+  const [showModal, setShowModal] = useState(false);
+  const [citaConfirmadaData, setCitaConfirmadaData] = useState(null);
 
   const messages = {
     allDay: "Todo el día",
@@ -60,6 +60,12 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
       end: new Date(2025, 7, 27, 15, 30, 0),
       isBookable: true,
     },
+    {
+      title: "Espacio Disponible",
+      start: new Date(2025, 8, 1, 15, 0, 0),
+      end: new Date(2025, 8, 1, 1, 0, 0),
+      isBookable: true,
+    },
   ];
 
   const handleSelectEvent = (event) => {
@@ -93,10 +99,9 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
   };
 
   const handleConfirmCita = () => {
-    // Aquí iría la lógica final de confirmación, por ejemplo, enviar a un backend
     alert("¡Cita agendada con éxito!");
     handleCloseModal();
-    onConfirm(citaConfirmadaData); // Llama a la prop onConfirm para actualizar el componente padre
+    onConfirm(citaConfirmadaData);
   };
 
   const eventPropGetter = (event) => {
@@ -114,6 +119,7 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
       <div className="cronograma">
         <div onClick={onBack} className="back-link">
           <FaArrowLeft className="back-icon" />
+          <span>Volver</span> {/* Añadimos "Volver" para claridad */}
         </div>
         <div className="horario-title">
           <h2>Programar la Cita</h2>
@@ -128,7 +134,7 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
             </p>
             <p>
               <span className="info-label">Consultorio:</span>{" "}
-              {consultorio.numero}
+              {consultorio.name} {/* <--- CAMBIO AQUÍ */}
             </p>
             <p>
               <span className="info-label">Estado:</span> {consultorio.estado}
@@ -187,7 +193,6 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
         </div>
       </div>
 
-      {/* Modal para el resumen de la cita */}
       <Modal open={showModal} onClose={handleCloseModal}>
         <ResumenCita
           appointmentDetails={citaConfirmadaData}
@@ -200,7 +205,3 @@ const SelectHorario = ({ consultorio, doctor, onBack, onConfirm }) => {
 };
 
 export default SelectHorario;
-
-// src/components/SelectHorario.jsx
-
-// ... (resto de importaciones) ...

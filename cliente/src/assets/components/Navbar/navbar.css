@@ -47,7 +47,7 @@
 }
 
 .navbar-btn:hover {
-  color: #ffeb3b;
+  color: #55bad3;
 }
 /* Encabezado Sidebar */
 .sidebar-header {
@@ -142,7 +142,7 @@
 }
 
 .info-icon .sidebar-icon {
-  color: #1feeba;
+  color: #1f2b6e;
   font-size: 1rem;
 }
 
@@ -160,14 +160,14 @@
 
 .info-value {
   font-size: 0.9rem;
-  color: white;
+  color: white !important;
   font-weight: 500;
   word-break: break-word;
 }
 
 /* Special style for hospital name */
 .user-info-item.hospital .info-icon {
-  background: rgba(255, 235, 59, 0.15);
+  background: rgba(184, 168, 31, 0.15);
 }
 
 .user-info-item.hospital .sidebar-icon {
@@ -209,7 +209,7 @@
   top: 0;
   width: 5px;
   height: 100%;
-  background: #3bbd75;
+  background: #3b68bd;
   transform: scaleY(0);
   transform-origin: bottom;
 
@@ -232,7 +232,7 @@
 
 .sidebar-btn:hover .sidebar-icon {
   transform: scale(1.1);
-  color: #14ee68af;
+  color: #599be7af;
 }
 
 /* Logout button */

@@ -100,10 +100,10 @@ const Navbar = () => {
         </div>
         <div className="navbar-links">
           <a className="navbar-btn" onClick={() => navigate("/panel")}>
-            Panel
+            Consulta Externa
           </a>
           <a className="navbar-btn" onClick={() => navigate("/historial")}>
-            Historial
+            Especialidades
           </a>
           {isAdmin && (
             <a
@@ -155,10 +155,10 @@ const Navbar = () => {
           </div>
         </div>
         <button className="sidebar-btn" onClick={() => navigate("/panel")}>
-          <GiPc className="sidebar-icon" /> Panel
+          <GiPc className="sidebar-icon" /> Consula Externa
         </button>
         <button className="sidebar-btn" onClick={() => navigate("/historial")}>
-          <FaHistory className="sidebar-icon" /> Historial
+          <FaHistory className="sidebar-icon" /> Especialidades
         </button>
         {isAdmin && (
           <button

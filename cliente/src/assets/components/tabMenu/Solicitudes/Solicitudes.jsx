@@ -107,14 +107,14 @@ const Solicitud = () => {
         <SelectConsultorio onClose={handleCloseConsultorioModal} />
       ) : (
         <>
-          <div className="filter-container">
-            <button className="filter-button" onClick={toggleModal}>
+          <div className="filtro-container">
+            <button className="filtro-button" onClick={toggleModal}>
               <FaFilter /> Filtrar
             </button>
 
-            <div className="active-filters">
+            <div className="active-filtro">
               {Object.entries(activeFilters).map(([key, value]) => (
-                <div key={key} className="filter-tag">
+                <div key={key} className="filtro-tag">
                   <span>{`${key}: ${value}`}</span>
                   <FaTimes onClick={() => removeFilter(key)} />
                 </div>

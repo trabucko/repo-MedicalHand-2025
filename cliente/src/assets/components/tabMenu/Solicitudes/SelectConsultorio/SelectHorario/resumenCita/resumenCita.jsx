@@ -54,7 +54,7 @@ const ResumenCita = ({ onConfirm, onBack, appointmentDetails }) => {
           <FaClinicMedical className="info-icon" />
           <div className="info-details">
             <span className="info-label">Consultorio</span>
-            <p className="info-value">{consultorio.numero}</p>
+            <p className="info-value">{consultorio.name}</p>
           </div>
         </div>
       </div>

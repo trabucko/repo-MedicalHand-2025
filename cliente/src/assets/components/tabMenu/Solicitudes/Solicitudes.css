@@ -126,7 +126,7 @@
 }
 
 /* Estilos para el contenedor de filtros y el botón */
-.filter-container {
+.filtro-container {
   display: flex;
   flex-direction: column; /* Apila los elementos en móvil */
   gap: 1rem;
@@ -134,7 +134,7 @@
   align-items: stretch; /* Estira los elementos para ocupar el ancho completo */
 }
 
-.filter-container .left-side-container {
+.filtro-container .left-side-container {
   display: flex;
   flex-direction: column; /* Apila los filtros verticalmente */
   align-items: flex-start;
@@ -142,7 +142,7 @@
 }
 
 /* Estilos para el botón de filtro */
-.filter-button {
+.filtro-button {
   background-color: #3b82f6;
   color: #ffffff;
   border: none;
@@ -159,19 +159,19 @@
   width: 100%; /* El botón ocupa todo el ancho en móvil */
 }
 
-.filter-button:hover {
+.filtro-button:hover {
   background-color: #2563eb;
 }
 
 /* Estilos para los tags de filtros activos */
-.active-filters {
+.active-filtro {
   display: flex;
   flex-wrap: wrap; /* Permite que los tags se envuelvan */
   gap: 10px;
   align-items: center;
 }
 
-.filter-tag {
+.filtro-tag {
   background-color: #e5f2ff;
   color: #3b82f6;
   padding: 6px 12px;
@@ -290,7 +290,7 @@
   .content-area {
     padding: 2rem;
     background-color: #f7f9fc;
-    min-height: 71vh;
+    min-height: 100vh;
   }
 
   .solicitudes-title {
@@ -353,7 +353,7 @@
     font-size: 0.9rem;
   }
 
-  .filter-container {
+  .filtro-container {
     display: flex;
     flex-direction: row-reverse; /* ¡Aquí está el cambio! Invierte el orden de los elementos hijos */
     justify-content: space-between;
@@ -362,14 +362,14 @@
     flex-wrap: wrap; /* Evita que los elementos se desborden si el espacio es limitado */
   }
 
-  .filter-container .left-side-container {
+  .filtro-container .left-side-container {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 1rem;
   }
 
-  .filter-button {
+  .filtro-button {
     width: auto;
     margin-bottom: 0;
   }

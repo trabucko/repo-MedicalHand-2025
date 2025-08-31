@@ -1,0 +1,394 @@
+/* src/components/Reprogramaciones/Reprogramacion.css */
+
+/* --- Estilos generales (Mobile First) --- */
+.reprogramacion-container {
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 1.5rem 1rem;
+  background-color: #f7f9fc;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  color: #333333;
+}
+
+.reprogramacion-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.reprogramacion-header h2 {
+  color: #c04000; /* Naranja oscuro y elegante */
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  letter-spacing: 1px;
+}
+
+.paso-contenido {
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border: none;
+}
+
+/* --- Estilos de la barra de búsqueda y filtros --- */
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-bar {
+  position: relative;
+  flex-grow: 1;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+  border-color: #d96215;
+  box-shadow: 0 0 5px rgba(217, 98, 21, 0.3);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  color: #555;
+}
+
+.filter-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  border: 1px solid #d96215;
+  color: #d96215;
+  padding: 0.75rem 1.5rem;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-button:hover {
+  background-color: rgba(217, 98, 21, 0.1);
+}
+
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #e0e0e0;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.filter-tag svg {
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: #888;
+}
+
+/* --- Tarjetas de Solicitudes --- */
+.solicitud-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-left: 5px solid #d96215; /* Borde naranja llamativo y un poco más oscuro */
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  gap: 1.5rem;
+}
+
+.solicitud-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.solicitud-info {
+  display: flex;
+  flex-direction: column; /* Apila en móvil */
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.paciente-info {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  width: auto;
+}
+
+.paciente-info p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.paciente-info p svg {
+  color: #d96215;
+  font-size: 1.2rem;
+}
+
+.motivo-solicitud {
+  font-size: 0.9rem;
+  color: #757575;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.cita-original-info {
+  display: flex;
+  flex-direction: column; /* Apila en móvil */
+  gap: 0.5rem;
+  width: 100%;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 1rem;
+}
+
+.cita-original-info p {
+  margin: 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #555555;
+}
+
+.cita-original-info p svg {
+  color: #4a4a4a;
+}
+
+.no-solicitudes {
+  text-align: center;
+  color: #757575;
+  font-style: italic;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+}
+
+/* --- Estilos para la Vista de Resumen (Paso 3) --- */
+.resumen-final {
+  text-align: center;
+}
+
+.resumen-seccion {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.resumen-seccion h4 {
+  margin-top: 0;
+  color: #1c315e;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.resumen-seccion p {
+  margin: 0.5rem 0;
+}
+
+/* --- Botones --- */
+.reprogramar-button,
+.action-button {
+  font-weight: 600;
+  text-transform: none;
+  border-radius: 25px;
+  padding: 0.75rem 1.75rem;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.reprogramar-button {
+  background-color: #fff;
+  color: #d96215;
+  border: 1px solid #d96215;
+}
+
+.reprogramar-button:hover {
+  background-color: rgba(217, 98, 21, 0.1);
+}
+
+.confirm-button {
+  background-color: #c04000;
+  color: #fff;
+  border: none;
+}
+
+.confirm-button:hover {
+  background-color: #a03500;
+}
+
+/* Botón de "Volver" con estilo de texto */
+.action-button:not(.confirm-button) {
+  background-color: transparent;
+  border: none;
+  color: #d96215;
+}
+
+/* --- Ficha de Resumen --- */
+.solicitud-resumen-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.solicitud-resumen-card h3 {
+  color: #1c315e;
+  margin-top: 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 1.25rem;
+}
+
+.solicitud-resumen-card p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #555555;
+}
+
+.solicitud-resumen-card p strong {
+  color: #333;
+}
+
+.solicitud-resumen-card p svg {
+  color: #4a4a4a;
+}
+
+/* --- Vista de Comparación de Fichas --- */
+.comparacion-fichas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.ficha-comparacion {
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.cita-original-comparacion {
+  border-left: 5px solid #d96215;
+}
+
+.nuevo-horario-comparacion {
+  border-left: 5px solid #1c315e;
+}
+
+.comparacion-icon {
+  font-size: 2rem;
+  color: #1c315e;
+}
+
+/* --- Media Queries (Responsividad) --- */
+@media (min-width: 768px) {
+  .reprogramacion-container {
+    width: 100%;
+    max-width: 100%;
+    margin-top: -0.5rem;
+    min-height: 71vh;
+  }
+  .reprogramacion-header h2 {
+    font-size: 1.8rem;
+  }
+
+  .solicitud-card {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .solicitud-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+  }
+
+  .paciente-info {
+    flex-direction: row;
+  }
+
+  .cita-original-info {
+    flex-direction: row;
+    gap: 2rem;
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .reprogramar-button {
+    flex-shrink: 0;
+    width: auto;
+  }
+
+  .filter-container {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+
+  /* Vista de comparacion en desktop */
+  .comparacion-fichas {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .comparacion-icon {
+    margin-top: 5rem;
+  }
+}
