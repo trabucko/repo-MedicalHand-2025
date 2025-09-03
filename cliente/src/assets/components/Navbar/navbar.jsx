@@ -22,20 +22,22 @@ const auth = getAuth();
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { claims, logout } = useAuth();
+  // ✅ CORREGIDO: Ahora obtenemos el objeto user completo desde el contexto
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [hospitalName, setHospitalName] = useState("Nombre del hospital");
   const [fullName, setFullName] = useState("Nombre usuario");
 
-  const isAdmin = claims?.role === "hospital_administrador";
-  const role = claims?.role || "Rol";
+  // ✅ CORREGIDO: Accedemos al rol directamente desde user.claims
+  const isAdmin = user?.claims?.role === "hospital_administrador";
+  const role = user?.claims?.role || "Rol";
+  const hospitalId = user?.claims?.hospitalId;
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const handleLogout = async () => {
     try {
       await logout();
-      // Redirige a la ruta principal, que es tu página de inicio de sesión.
       navigate("/");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
@@ -44,10 +46,10 @@ const Navbar = () => {
 
   // Obtener hospital
   useEffect(() => {
-    if (!claims?.hospitalId) return;
+    if (!hospitalId) return;
     const fetchHospital = async () => {
       try {
-        const docRef = doc(db, "hospitales_MedicalHand", claims.hospitalId);
+        const docRef = doc(db, "hospitales_MedicalHand", hospitalId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setHospitalName(docSnap.data().name);
@@ -57,13 +59,13 @@ const Navbar = () => {
       }
     };
     fetchHospital();
-  }, [claims?.hospitalId]);
+  }, [hospitalId]);
 
   // Obtener nombre completo del usuario
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) return;
-      console.log("Usuario autenticado:", user);
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (!firebaseUser) return;
+      console.log("Usuario autenticado:", firebaseUser);
       try {
         const querySnapshot = await getDocs(
           collection(db, "usuarios_hospitales")
@@ -71,7 +73,7 @@ const Navbar = () => {
         let foundUser = null;
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.email === user.email) {
+          if (data.email === firebaseUser.email) {
             foundUser = data;
           }
         });
@@ -82,7 +84,7 @@ const Navbar = () => {
         } else {
           console.log(
             "No se encontraron documentos para el email:",
-            user.email
+            firebaseUser.email
           );
         }
       } catch (err) {
@@ -106,10 +108,7 @@ const Navbar = () => {
             Especialidades
           </a>
           {isAdmin && (
-            <a
-              className="navbar-btn"
-              onClick={() => navigate("/administracion")}
-            >
+            <a className="navbar-btn" onClick={() => navigate("/Admin")}>
               Administración
             </a>
           )}
@@ -164,10 +163,7 @@ const Navbar = () => {
           <FaHistory className="sidebar-icon" /> Especialidades
         </button>
         {isAdmin && (
-          <button
-            className="sidebar-btn"
-            onClick={() => navigate("/administracion")}
-          >
+          <button className="sidebar-btn" onClick={() => navigate("/Admin")}>
             <FaUserCog className="sidebar-icon" /> Administración
           </button>
         )}

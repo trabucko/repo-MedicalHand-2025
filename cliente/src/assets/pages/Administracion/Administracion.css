@@ -1,0 +1,14 @@
+/* Contenedor principal del layout de administración */
+.administracion-main-container {
+  display: flex;
+  /* El height aquí es crucial para que el fondo negro cubra todo */
+  min-height: calc(
+    100vh - 60px
+  ); /* Ajusta si tu navbar tiene una altura diferente */
+  padding: 20px; /* Espacio alrededor del contenedor blanco del contenido */
+  box-sizing: border-box; /* Incluir padding en el tamaño total */
+  margin-top: 2rem;
+  overflow: hidden;
+  justify-content: center;
+  align-items: center;
+}

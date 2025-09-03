@@ -9,6 +9,7 @@
   "name": "servidor",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "devDependencies": {
     "nodemon": "^3.1.10"
   },

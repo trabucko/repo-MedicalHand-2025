@@ -5,6 +5,7 @@ import {
   Routes,
   Route,
   Navigate,
+  Outlet,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "../src/assets/context/AuthContext.jsx";
 import {
@@ -13,18 +14,15 @@ import {
 } from "../src/assets/context/LoadingContext.jsx";
 import Login from "../src/assets/pages/Login/Login.jsx";
 import ConsultaExterna from "./assets/pages/ConsultaExterna/ConsultaExterna.jsx";
+import Administracion from "./assets/pages/Administracion/Administracion.jsx";
 import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
 import ResumenCita from "../src/assets/components/tabMenu/Solicitudes/SelectConsultorio/SelectHorario/resumenCita/resumenCita.jsx";
 
 function App() {
   return (
-    // 1. AuthProvider para la autenticación en toda la app
     <AuthProvider>
-      // 2. LoadingProvider para el estado de carga global
       <LoadingProvider>
-        // 3. Router para manejar las rutas
         <Router>
-          // 4. El loader se renderiza aquí para estar en toda la app
           <GlobalLoader />
           <Routes>
             <Route
@@ -52,6 +50,29 @@ function App() {
                 </PrivateRoute>
               }
             />
+
+            {/* 🔒 Rutas de administración anidadas */}
+            <Route
+              path="/administracion/*"
+              element={
+                <PrivateRoute requiredRole="hospital_administrador">
+                  <AdministracionLayout />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<Navigate to="crear-monitor" replace />} />
+              <Route path="crear-monitor" element={<Administracion />} />
+              <Route path="crear-doctor" element={<Administracion />} />
+              <Route path="crear-administrador" element={<Administracion />} />
+              <Route path="consultorios" element={<Administracion />} />
+              <Route path="reportes" element={<Administracion />} />
+            </Route>
+
+            {/* Ruta de respaldo para /Admin (redirecciona a la nueva estructura) */}
+            <Route
+              path="/Admin"
+              element={<Navigate to="/administracion/crear-monitor" replace />}
+            />
           </Routes>
         </Router>
       </LoadingProvider>
@@ -59,22 +80,36 @@ function App() {
   );
 }
 
-// 🔒 Ruta protegida
-function PrivateRoute({ children }) {
+// Layout para las rutas de administración
+function AdministracionLayout() {
+  return (
+    <div>
+      <Outlet /> {/* Esto renderizará el componente de la ruta hija */}
+    </div>
+  );
+}
+
+// 🔒 Ruta protegida (mantén el mismo código que ya tienes)
+function PrivateRoute({ children, requiredRole }) {
   const { user, loading: authLoading } = useAuth();
   const { isLoading: globalLoading } = useLoading();
 
-  // Muestra la pantalla de carga si AuthContext o LoadingContext están cargando
   if (authLoading || globalLoading) {
     return <p>Cargando...</p>;
   }
+
   if (!user) {
     return <Navigate to="/" />;
   }
+
+  if (requiredRole && user.claims?.role !== requiredRole) {
+    return <Navigate to="/ConsultaExt" />;
+  }
+
   return children;
 }
 
-// 🚪 Ruta pública
+// 🚪 Ruta pública (mantén el mismo código que ya tienes)
 function PublicRoute({ children }) {
   const { user, loading: authLoading } = useAuth();
   const { isLoading: globalLoading } = useLoading();

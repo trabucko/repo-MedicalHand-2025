@@ -1,7 +1,9 @@
-import express from "express"; // Framework para crear un servidor web y manejar rutas HTTP (peticiones del Frontend al Backend)
-import cors from "cors"; // Middleware para permitir solicitudes desde otros orígenes (CORS)
-import dotenv from "dotenv"; //para cargar variables de entorno (para mantener una seguridad en datos valiosos)
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 import morgan from "morgan";
+import monitorRoutes from "../src/routes/monitorUserRoutes.js";
+import doctorRoutes from "../src/routes/doctorUserRoutes.js"; // Importación del nuevo enrutador de doctores
 
 //se cargan las variables de entorno del archivo .env
 dotenv.config();
@@ -10,28 +12,29 @@ dotenv.config();
 const app = express();
 
 //Middlewares
-
 app.use(morgan("dev"));
 
 // Habilitar CORS para permitir peticiones desde otros dominios/puertos
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
-    credentials: true, // si envías cookies o headers
+    credentials: true,
   })
 );
 
 // Habilitar el parseo de datos JSON en el cuerpo de las peticiones (req.body)
-
-app.use(express.json()); //hace que estas peticiones , puedan ser facilmente procesadas en formato JSON
+app.use(express.json());
 
 //Ruta de Prueba
 app.get("/", (req, res) => {
   res.send("Bienvenido a MedicalHand Backend");
 });
 
+// Uso de las rutas
+app.use("/monitores", monitorRoutes);
+app.use("/doctores", doctorRoutes); // Uso de la nueva ruta para doctores
+
 //puerto
-// Si existe process.env.PORT (definido en .env), usarlo, si no usar 3000
 const PORT = process.env.PORT || 3000;
 
 // --- Iniciar servidor ---
