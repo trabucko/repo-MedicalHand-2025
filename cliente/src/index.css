@@ -6,6 +6,19 @@
 }
 
 body {
+  margin: 0; /* Es buena práctica asegurarse de que no haya márgenes por defecto */
+
+  /* ✅ PEGA AQUÍ LAS LÍNEAS QUE CORTASTE */
+  background: #f8fafc;
+  font-family: "Nunito Sans";
+}
+
+/* En tu archivo index.css o App.css */
+
+.page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
-  background-color: #f5f9fd;
+  width: 100%;
 }

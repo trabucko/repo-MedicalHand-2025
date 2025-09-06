@@ -14,7 +14,7 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import app from "../../../firebase.js";
+import { app } from "../../../firebase.js"; // <-- Cambia a una importación nombrada con llaves
 import { useAuth } from "../../context/AuthContext.jsx";
 
 const db = getFirestore(app);

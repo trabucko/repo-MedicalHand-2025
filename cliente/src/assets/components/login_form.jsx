@@ -1,100 +1,61 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase.js";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
-import { useLoading } from "../../assets/context/LoadingContext.jsx"; // 👈 Asegúrate de que esta ruta sea correcta
+// ❌ Ya no se importan hooks de navegación o autenticación aquí
 
-export default function Login() {
+// ✅ El componente ahora recibe props para manejar el submit y los errores
+export default function LoginForm({ onLogin, error }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
 
-  const { setUser, setClaims } = useAuth();
-  const navigate = useNavigate();
-  const { showLoader, hideLoader } = useLoading(); // 👈 Obtiene las funciones del contexto de carga
-
-  const handleLogin = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setError(null);
-    showLoader(); // 👈 Llama a showLoader() al inicio de la función
-
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      // Forzar refresh token para obtener claims
-      const tokenResult = await userCredential.user.getIdTokenResult(true);
-
-      // Actualizamos el contexto
-      setUser(userCredential.user);
-      setClaims(tokenResult.claims);
-
-      // Redirigimos al dashboard/inicio
-      navigate("/inicio");
-    } catch (err) {
-      if (
-        err.code === "auth/wrong-password" ||
-        err.code === "auth/user-not-found"
-      ) {
-        setError("Correo o contraseña incorrecta, vuelva a intentarlo");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Correo inválido, vuelva a intentarlo");
-      } else {
-        setError(err.message);
-      }
-    } finally {
-      hideLoader(); // 👈 Llama a hideLoader() al final, siempre
-    }
+    // Llama a la función que le pasó el componente padre (Login.jsx)
+    onLogin(email, password);
   };
 
   return (
+    // ❌ Se eliminó el div .page-container, ya no es necesario aquí
     <StyledWrapper>
-      <div className="container">
-        <form className="form" onSubmit={handleLogin}>
-          <div className="form_front">
-            <div className="form_details">Iniciar Sesión</div>
-            <label>Correo Electronico:</label>
-            <input
-              placeholder="Correo Electronico"
-              className="input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <label>Contraseña:</label>
-            <input
-              placeholder="Contraseña"
-              className="input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <button className="btn" type="submit">
-              Entrar
-            </button>
-            {error && (
-              <p
-                style={{ color: "rgba(235, 91, 103, 1)", textAlign: "center" }}
-              >
-                {error}
-              </p>
-            )}
-            <span className="switch">
-              En caso de no tener cuenta, contactese con su administrador
-            </span>
-          </div>
-        </form>
-      </div>
+      <form className="form" onSubmit={handleSubmit}>
+        <div className="form_front">
+          <div className="form_details">Iniciar Sesión</div>
+          <label>Correo Electronico:</label>
+          <input
+            placeholder="Correo Electronico"
+            className="input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <label>Contraseña:</label>
+          <input
+            placeholder="Contraseña"
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button className="btn" type="submit">
+            Entrar
+          </button>
+          {error && (
+            <p style={{ color: "rgba(235, 91, 103, 1)", textAlign: "center" }}>
+              {error}
+            </p>
+          )}
+          <span className="switch">
+            En caso de no tener cuenta, contactese con su administrador
+          </span>
+        </div>
+      </form>
     </StyledWrapper>
   );
 }
-
 const StyledWrapper = styled.div`
+  /* ... (tu código de estilo permanece sin cambios) */
+
   .container {
     display: flex;
     justify-content: center;
@@ -229,10 +190,10 @@ const StyledWrapper = styled.div`
     justify-content: start;
     height: 1.5vh;
 
-    text-align: center; /* centrado horizontal */
-    color: #ffffff; /* blanco sobre el overlay */
-    font-size: 2rem; /* tamaño grande */
-    margin-bottom: 2rem; /* separa del formulario */
+    text-align: center;
+    color: #ffffff;
+    font-size: 2rem;
+    margin-bottom: 2rem;
     font-weight: 700;
   }
 `;

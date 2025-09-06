@@ -1,0 +1,244 @@
+/* Encabezado Sidebar */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-logo {
+  width: 2.5rem;
+  height: auto;
+  margin-left: 1rem;
+}
+
+.sidebar-title {
+  display: flex;
+  flex-direction: column;
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1.1;
+  margin-left: 1.2rem;
+}
+
+.sidebar-title .medical {
+  color: white;
+}
+.sidebar-title .hand {
+  color: #0a6783;
+}
+
+/* --- Contenedor principal del Sidebar --- */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -325px; /* Comienza fuera de la pantalla */
+  width: 20rem;
+  height: 100vh;
+  background: #121212;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.6);
+  transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 1001;
+  overflow-y: auto;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  /* ❗ IMPORTANTE: Eliminé 'margin-top' para que no dependa de la altura del Navbar */
+}
+
+.sidebar.open {
+  right: 0; /* Se desliza para mostrarse */
+}
+
+/* Sección de Perfil de Usuario */
+.sidebar-profile {
+  background: rgba(14, 54, 187, 0.022);
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.user-info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.8rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.user-info-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.info-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(31, 59, 238, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.info-icon .sidebar-icon {
+  color: #1f2b6e;
+  font-size: 1rem;
+}
+
+.info-content {
+  flex-grow: 1;
+}
+.info-label {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+.info-value {
+  font-size: 0.9rem;
+  color: white !important;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Estilos especiales para Hospital y Rol */
+.user-info-item.hospital .info-icon {
+  background: rgba(184, 168, 31, 0.15);
+}
+.user-info-item.hospital .sidebar-icon {
+  color: #ffeb3b;
+}
+.user-info-item.role .info-icon {
+  background: rgba(76, 175, 80, 0.15);
+}
+.user-info-item.role .sidebar-icon {
+  color: #4caf50;
+}
+
+/* Botones del Sidebar */
+.sidebar-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0e0e0;
+  border: none;
+  padding: 14px 18px;
+  margin: 8px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-btn::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: #3b68bd;
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(5px);
+  color: #ffffff;
+}
+.sidebar-btn:hover::before {
+  transform: scaleY(1);
+}
+.sidebar-btn .sidebar-icon {
+  transition: transform 0.3s ease;
+}
+.sidebar-btn:hover .sidebar-icon {
+  transform: scale(1.1);
+  color: #599be7af;
+}
+
+/* Botón de Cerrar Sesión */
+.sidebar-btn.logout-btn {
+  margin-top: auto;
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff8a8a;
+}
+.sidebar-btn.logout-btn .sidebar-icon {
+  color: #ff8a8a;
+}
+.sidebar-btn.logout-btn:hover {
+  background: rgba(255, 107, 107, 0.25);
+  color: #ff6b6b;
+}
+.sidebar-btn.logout-btn:hover::before {
+  background: #ff6b6b;
+}
+
+/* Animaciones */
+.sidebar.open .sidebar-btn {
+  animation: fadeInRight 0.4s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Retraso de animación para cada botón */
+.sidebar.open .sidebar-btn:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.sidebar.open .sidebar-btn:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.sidebar.open .sidebar-btn:nth-child(5) {
+  animation-delay: 0.3s;
+}
+.sidebar.open .sidebar-btn.logout-btn {
+  animation-delay: 0.4s;
+}
+
+/* Media Queries */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 260px;
+    padding: 1.2rem;
+  }
+  .sidebar-profile {
+    padding: 1rem;
+  }
+  .user-info-item {
+    margin-bottom: 0.6rem;
+  }
+  .info-icon {
+    width: 28px;
+    height: 28px;
+  }
+  .sidebar-btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+}

@@ -1,71 +1,74 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import {
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence,
-  signOut,
-} from "firebase/auth";
-import { auth } from "../../firebase.js";
+// src/assets/context/AuthContext.jsx (Versión Final)
 
+import { createContext, useContext, useState, useEffect } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
+import { auth, app } from "../../firebase.js";
+import { useLoading } from "./LoadingContext.jsx"; // ✅ 1. Importa el hook del LoadingContext
+
+const db = getFirestore(app);
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  // Ahora solo necesitamos el estado 'user' y 'loading'
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { showLoader, hideLoader } = useLoading(); // ✅ 2. Obtén las funciones para mostrar/ocultar el loader
 
   const logout = async () => {
-    try {
-      await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      console.error("Error cerrando sesión:", error);
-    }
+    // No necesitamos el loader aquí porque la redirección es instantánea
+    await signOut(auth);
   };
 
   useEffect(() => {
-    setPersistence(auth, browserLocalPersistence)
-      .then(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-          if (firebaseUser) {
-            try {
-              // Obtenemos el token y sus claims
-              const tokenResult = await firebaseUser.getIdTokenResult(true);
+    // ✅ 3. MUESTRA EL LOADER al inicio de la verificación
+    // Esto se ejecutará tanto en la carga inicial de la página como después del login.
+    showLoader();
 
-              // ✅ Fusionamos el objeto del usuario de Firebase con los claims
-              const userWithClaims = {
-                ...firebaseUser,
-                claims: tokenResult.claims,
-              };
-
-              setUser(userWithClaims);
-            } catch (err) {
-              console.error("Error obteniendo claims:", err);
-              // Si falla, aún podemos establecer el usuario, pero sin claims
-              setUser(firebaseUser);
-            }
-          } else {
-            setUser(null);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // ... (toda tu lógica para obtener claims y datos de firestore no cambia)
+          const tokenResult = await firebaseUser.getIdTokenResult(true);
+          const claims = tokenResult.claims;
+          const userDocRef = doc(db, "usuarios_hospitales", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          const firestoreUserData = userDocSnap.data();
+          let hospitalData = {};
+          if (claims.hospitalId) {
+            const hospitalDocRef = doc(
+              db,
+              "hospitales_MedicalHand",
+              claims.hospitalId
+            );
+            const hospitalDocSnap = await getDoc(hospitalDocRef);
+            hospitalData = hospitalDocSnap.data();
           }
-          setLoading(false);
-        });
+          const completeUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            claims: claims,
+            fullName: firestoreUserData?.fullName || "Usuario sin nombre",
+            hospitalName: hospitalData?.name || "Hospital no asignado",
+          };
+          setUser(completeUser);
+        } catch (err) {
+          console.error("Error al enriquecer el usuario:", err);
+          setUser(firebaseUser); // Establece el usuario básico si falla
+        }
+      } else {
+        setUser(null);
+      }
 
-        return () => unsubscribe();
-      })
-      .catch((error) => {
-        console.error("Error configurando persistencia:", error);
-        setLoading(false);
-      });
-  }, []);
+      setLoading(false); // Avisa a las rutas que la carga de autenticación terminó
+      // ✅ 4. OCULTA EL LOADER al final de todo el proceso
+      hideLoader();
+    });
+
+    return () => unsubscribe();
+  }, []); // El array vacío asegura que esto solo se configure una vez
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, logout }}>
       {children}
     </AuthContext.Provider>
   );

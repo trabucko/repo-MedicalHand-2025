@@ -8,119 +8,99 @@ import {
   Outlet,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "../src/assets/context/AuthContext.jsx";
-import {
-  LoadingProvider,
-  useLoading,
-} from "../src/assets/context/LoadingContext.jsx";
-import Login from "../src/assets/pages/Login/Login.jsx";
-import ConsultaExterna from "./assets/pages/ConsultaExterna/ConsultaExterna.jsx";
+import { LoadingProvider } from "../src/assets/context/LoadingContext.jsx";
+
+// Tus componentes de página
+import Login from "../src/assets/pages/Login/Login.jsx"; // ⚠️ ¡Asegúrate que la ruta sea correcta!
+import DoctorDashboard from "./assets/pages/hospitalDoctor/DoctorDashboard.jsx";
 import Administracion from "./assets/pages/Administracion/Administracion.jsx";
 import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
-import ResumenCita from "../src/assets/components/tabMenu/Solicitudes/SelectConsultorio/SelectHorario/resumenCita/resumenCita.jsx";
+import ConsultaExterna from "./assets/pages/ConsultaExterna/ConsultaExterna.jsx";
+
+// ✅ 1. COMPONENTE PARA RUTAS DE INVITADOS (NO LOGUEADOS)
+// Este componente es la clave para romper el bucle infinito.
+const GuestRoute = () => {
+  const { user, loading } = useAuth();
+  if (loading) return <GlobalLoader />;
+  if (user) {
+    const role = user.claims?.role;
+    // ✅ 2. AÑADE LA REGLA PARA EL NUEVO ROL
+    if (role === "hospital_monitor")
+      return <Navigate to="/consulta-externa" replace />;
+    if (role === "hospital_doctor")
+      return <Navigate to="/dashboard-doctor" replace />;
+    if (role === "hospital_administrador")
+      return <Navigate to="/administracion" replace />;
+    // Si tiene un rol desconocido, lo mandamos al login para evitar errores.
+    return <Navigate to="/login" replace />;
+  }
+  return <Outlet />;
+};
+
+// ✅ 2. COMPONENTE MEJORADO PARA RUTAS PROTEGIDAS (LOGUEADOS)
+// Tu versión era buena, esta es una versión ligeramente refinada.
+const ProtectedRoute = ({ requiredRole }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <GlobalLoader />;
+  }
+
+  // Si no hay usuario, siempre a la página de login.
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Si se requiere un rol y el usuario no lo tiene, lo redirigimos.
+  if (requiredRole && user.claims?.role !== requiredRole) {
+    // Lo ideal es redirigir a una página de "Acceso Denegado" o a su propio dashboard.
+    // Por ahora, lo mandamos al login para evitar bucles.
+    return <Navigate to="/login" replace />;
+  }
+
+  // Si el usuario está logueado y tiene el rol correcto (o no se requiere rol),
+  // le mostramos la página solicitada.
+  return <Outlet />;
+};
 
 function App() {
   return (
-    <AuthProvider>
-      <LoadingProvider>
+    // ✅ ESTE ES EL ORDEN CORRECTO Y LA SOLUCIÓN AL ERROR
+    // LoadingProvider debe estar por fuera, envolviendo todo.
+    <LoadingProvider>
+      <AuthProvider>
         <Router>
           <GlobalLoader />
           <Routes>
-            <Route
-              path="/"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/ConsultaExt"
-              element={
-                <PrivateRoute>
-                  <ConsultaExterna />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
-              path="/resumen-cita"
-              element={
-                <PrivateRoute>
-                  <ResumenCita />
-                </PrivateRoute>
-              }
-            />
-
-            {/* 🔒 Rutas de administración anidadas */}
-            <Route
-              path="/administracion/*"
-              element={
-                <PrivateRoute requiredRole="hospital_administrador">
-                  <AdministracionLayout />
-                </PrivateRoute>
-              }
-            >
-              <Route index element={<Navigate to="crear-monitor" replace />} />
-              <Route path="crear-monitor" element={<Administracion />} />
-              <Route path="crear-doctor" element={<Administracion />} />
-              <Route path="crear-administrador" element={<Administracion />} />
-              <Route path="consultorios" element={<Administracion />} />
-              <Route path="reportes" element={<Administracion />} />
+            {/* --- RUTAS PARA INVITADOS --- */}
+            <Route element={<GuestRoute />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Login />} />
             </Route>
 
-            {/* Ruta de respaldo para /Admin (redirecciona a la nueva estructura) */}
+            {/* --- RUTAS PROTEGIDAS --- */}
+            {/* ✅ 3. CREA EL NUEVO GRUPO DE RUTAS PARA EL MONITOR */}
+            <Route element={<ProtectedRoute requiredRole="hospital_monitor" />}>
+              <Route path="/consulta-externa" element={<ConsultaExterna />} />
+            </Route>
+
+            {/* Rutas para Doctores */}
+            <Route element={<ProtectedRoute requiredRole="hospital_doctor" />}>
+              <Route path="/dashboard-doctor" element={<DoctorDashboard />} />
+            </Route>
+
+            {/* Rutas para Administradores */}
             <Route
-              path="/Admin"
-              element={<Navigate to="/administracion/crear-monitor" replace />}
-            />
+              element={<ProtectedRoute requiredRole="hospital_administrador" />}
+            >
+              <Route path="/administracion/*" element={<Administracion />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </Router>
-      </LoadingProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </LoadingProvider>
   );
 }
-
-// Layout para las rutas de administración
-function AdministracionLayout() {
-  return (
-    <div>
-      <Outlet /> {/* Esto renderizará el componente de la ruta hija */}
-    </div>
-  );
-}
-
-// 🔒 Ruta protegida (mantén el mismo código que ya tienes)
-function PrivateRoute({ children, requiredRole }) {
-  const { user, loading: authLoading } = useAuth();
-  const { isLoading: globalLoading } = useLoading();
-
-  if (authLoading || globalLoading) {
-    return <p>Cargando...</p>;
-  }
-
-  if (!user) {
-    return <Navigate to="/" />;
-  }
-
-  if (requiredRole && user.claims?.role !== requiredRole) {
-    return <Navigate to="/ConsultaExt" />;
-  }
-
-  return children;
-}
-
-// 🚪 Ruta pública (mantén el mismo código que ya tienes)
-function PublicRoute({ children }) {
-  const { user, loading: authLoading } = useAuth();
-  const { isLoading: globalLoading } = useLoading();
-
-  if (authLoading || globalLoading) {
-    return <p>Cargando...</p>;
-  }
-  if (user) {
-    return <Navigate to="/ConsultaExt" />;
-  }
-  return children;
-}
-
 export default App;
