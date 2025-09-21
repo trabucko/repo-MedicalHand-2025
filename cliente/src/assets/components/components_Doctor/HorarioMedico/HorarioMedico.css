@@ -1,0 +1,347 @@
+/* HorarioMedico.css - Versión Mejorada */
+
+.horario-medico-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #2d3748;
+  overflow: hidden;
+}
+
+/* HorarioMedico.css - Versión Profesional para Hospital */
+:root {
+  --hospital-blue: #0d3b65;
+  --hospital-blue-light: #1e5a8a;
+}
+
+.horario-medico-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  color: var(--hospital-gray);
+  background: var(--hospital-bg);
+  min-height: 100vh;
+}
+
+/* Header elegante */
+.horario-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2.5rem 2rem;
+  background: linear-gradient(
+    135deg,
+    var(--hospital-blue) 0%,
+    var(--hospital-blue-light) 100%
+  );
+  border-radius: var(--hospital-radius);
+  color: white;
+  box-shadow: var(--hospital-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.horario-header::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  transform: rotate(-15deg);
+}
+
+.horario-header h2 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
+}
+
+.horario-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
+}
+
+.horario-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+}
+
+.horario-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.btn-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+}
+
+.btn-primary {
+  background-color: #4299e1;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #3182ce;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.btn-secondary:hover {
+  background-color: #cbd5e0;
+  transform: translateY(-1px);
+}
+
+.btn-cancel {
+  background-color: #f56565;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #e53e3e;
+  transform: translateY(-1px);
+}
+
+.btn-save {
+  background-color: #48bb78;
+  color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+  background-color: #38a169;
+  transform: translateY(-1px);
+}
+
+.btn-save:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: #edf2f7;
+}
+
+.horario-form-container {
+  margin-bottom: 2rem;
+}
+
+.horario-form {
+  background-color: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.horario-form h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.form-group select,
+.form-group input {
+  padding: 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+}
+
+.horarios-registrados {
+  margin-top: 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+  color: #2d3748;
+  font-weight: 600;
+  margin: 0;
+}
+
+.badge {
+  background-color: #4299e1;
+  color: white;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.no-horarios-message {
+  text-align: center;
+  padding: 3rem 2rem;
+  background-color: #f7fafc;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e0;
+}
+
+.no-horarios-message .illustration {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.no-horarios-message h4 {
+  color: #4a5568;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.no-horarios-message p {
+  color: #718096;
+  margin-bottom: 0.5rem;
+}
+
+.horarios-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.horario-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.horario-item:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.day-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #ebf8ff;
+  color: #3182ce;
+  border-radius: 8px;
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+.horario-details {
+  flex: 1;
+}
+
+.dia {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.horario {
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.horario-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.rbc-event {
+  background-color: #38a169;
+}
+/* Responsive */
+@media (max-width: 768px) {
+  .horario-medico-container {
+    padding: 1rem;
+  }
+
+  .horario-content {
+    padding: 1.5rem;
+  }
+
+  .horario-actions {
+    flex-direction: column;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .horario-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .horario-actions {
+    align-self: flex-end;
+  }
+}

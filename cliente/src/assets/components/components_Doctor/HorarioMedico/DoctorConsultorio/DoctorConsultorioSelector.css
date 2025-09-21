@@ -1,0 +1,388 @@
+/* DoctorConsultorioSelector.css - Diseño Elegante */
+:root {
+  --dcs-primary: #0d3b65;
+  --dcs-primary-light: #1e5a8a;
+  --dcs-accent: #38a169;
+  --dcs-accent-light: #48bb78;
+  --dcs-warning: #ed8936;
+  --dcs-error: #f56565;
+  --dcs-text: #2d3748;
+  --dcs-text-light: #718096;
+  --dcs-bg: #ffffff;
+  --dcs-bg-secondary: #f8fafc;
+  --dcs-border: #e2e8f0;
+  --dcs-border-light: #f1f5f9;
+  --dcs-shadow: 0 4px 20px rgba(13, 59, 101, 0.08);
+  --dcs-shadow-hover: 0 8px 30px rgba(13, 59, 101, 0.15);
+  --dcs-radius: 16px;
+  --dcs-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dcs-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header */
+.dcs-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 2.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--dcs-primary) 0%,
+    var(--dcs-primary-light) 100%
+  );
+  border-radius: var(--dcs-radius);
+  color: white;
+  box-shadow: var(--dcs-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.dcs-header::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 70%
+  );
+  transform: rotate(-15deg);
+}
+
+.dcs-header-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.9;
+}
+
+.dcs-header h2 {
+  font-size: 2.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  position: relative;
+  z-index: 2;
+}
+
+.dcs-header p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
+}
+
+/* Estado vacío */
+.dcs-no-consultorios {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--dcs-bg);
+  border-radius: var(--dcs-radius);
+  border: 2px dashed var(--dcs-border);
+  box-shadow: var(--dcs-shadow);
+}
+
+.dcs-empty-icon {
+  font-size: 4rem;
+  color: var(--dcs-text-light);
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+}
+
+.dcs-no-consultorios h3 {
+  color: var(--dcs-text);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.dcs-no-consultorios p {
+  color: var(--dcs-text-light);
+  line-height: 1.6;
+  font-size: 1.1rem;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Grid de consultorios */
+.dcs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Tarjetas de consultorio */
+.dcs-card {
+  background: var(--dcs-bg);
+  border-radius: var(--dcs-radius);
+  box-shadow: var(--dcs-shadow);
+  padding: 1.5rem;
+  transition: var(--dcs-transition);
+  border: 1px solid var(--dcs-border-light);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.dcs-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--dcs-primary), var(--dcs-accent));
+}
+
+.dcs-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--dcs-shadow-hover);
+  border-color: var(--dcs-primary-light);
+}
+
+.dcs-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.dcs-card-icon {
+  font-size: 2rem;
+  color: var(--dcs-primary);
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  padding: 0.75rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dcs-status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.dcs-status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dcs-status-assigned {
+  background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+  color: #22543d;
+}
+
+.dcs-status-available {
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  color: #2c5282;
+}
+
+.dcs-card-content {
+  margin-bottom: 1.5rem;
+}
+
+.dcs-consultorio-name {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--dcs-text);
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+
+.dcs-location {
+  color: var(--dcs-text-light);
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dcs-equipment {
+  color: var(--dcs-text);
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--dcs-border);
+  margin-top: 0.75rem;
+}
+
+.dcs-card-footer {
+  border-top: 1px solid var(--dcs-border);
+  padding-top: 1.25rem;
+}
+
+.dcs-select-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--dcs-primary) 0%,
+    var(--dcs-primary-light) 100%
+  );
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--dcs-transition);
+  box-shadow: 0 4px 15px rgba(13, 59, 101, 0.2);
+}
+
+.dcs-select-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(13, 59, 101, 0.3);
+  background: linear-gradient(
+    135deg,
+    var(--dcs-primary-light) 0%,
+    #2563eb 100%
+  );
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .dcs-container {
+    padding: 1.5rem;
+  }
+
+  .dcs-header {
+    padding: 2rem 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .dcs-header h2 {
+    font-size: 2rem;
+  }
+
+  .dcs-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dcs-container {
+    padding: 1rem;
+  }
+
+  .dcs-header {
+    padding: 1.75rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .dcs-header h2 {
+    font-size: 1.75rem;
+  }
+
+  .dcs-header p {
+    font-size: 1rem;
+  }
+
+  .dcs-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .dcs-card {
+    padding: 1.25rem;
+  }
+
+  .dcs-consultorio-name {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dcs-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .dcs-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .dcs-header-icon {
+    font-size: 2rem;
+  }
+
+  .dcs-no-consultorios {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .dcs-empty-icon {
+    font-size: 3rem;
+  }
+
+  .dcs-card-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .dcs-status-indicator {
+    align-self: flex-start;
+  }
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .dcs-card,
+  .dcs-select-btn {
+    transition: none;
+  }
+
+  .dcs-card:hover {
+    transform: none;
+  }
+}
+
+.dcs-card:focus-visible,
+.dcs-select-btn:focus-visible {
+  outline: 2px solid var(--dcs-accent);
+  outline-offset: 2px;
+}
+
+/* Efecto de carga suave */
+.dcs-grid {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modo alto contraste */
+@media (prefers-contrast: high) {
+  .dcs-card {
+    border: 2px solid var(--dcs-text);
+  }
+
+  .dcs-select-btn {
+    border: 2px solid var(--dcs-text);
+  }
+}

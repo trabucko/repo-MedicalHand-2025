@@ -1,0 +1,423 @@
+/* ScheduleModal.css - Estilo Google Optimizado */
+
+/* Variables CSS para consistencia */
+:root {
+  --google-blue: #1a73e8;
+  --google-blue-hover: #1967d2;
+  --google-red: #ea4335;
+  --google-red-hover: #d33426;
+  --google-gray-50: #f8f9fa;
+  --google-gray-100: #f1f3f4;
+  --google-gray-200: #e8eaed;
+  --google-gray-300: #dadce0;
+  --google-gray-400: #bdc1c6;
+  --google-gray-500: #9aa0a6;
+  --google-gray-600: #80868b;
+  --google-gray-700: #5f6368;
+  --google-gray-800: #3c4043;
+  --google-gray-900: #202124;
+  --google-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3),
+    0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  --google-radius: 8px;
+  --google-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Overlay con backdrop-filter para efecto de cristal */
+.google-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: google-fade-in 0.2s ease-out;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes google-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Contenido del modal - Estilo Google */
+.google-modal-content {
+  background: white;
+  border-radius: var(--google-radius);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: google-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--google-shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes google-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header del modal */
+.google-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--google-gray-200);
+}
+
+.google-modal-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--google-gray-800);
+  margin: 0;
+}
+
+.google-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--google-gray-600);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--google-transition);
+}
+
+.google-close-btn:hover {
+  background: var(--google-gray-100);
+  color: var(--google-gray-800);
+}
+
+/* Cuerpo del modal */
+.google-modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Inputs de tiempo */
+.google-time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.google-time-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.google-time-label {
+  font-size: 14px;
+  color: var(--google-gray-700);
+  font-weight: 500;
+}
+
+.google-time-input {
+  padding: 10px 12px;
+  border: 1px solid var(--google-gray-300);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: var(--google-transition);
+  background: white;
+}
+
+.google-time-input:focus {
+  outline: none;
+  border-color: var(--google-blue);
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.google-time-separator {
+  color: var(--google-gray-500);
+  font-weight: 500;
+  margin-top: 20px;
+}
+
+/* Selector de días estilo Google */
+.google-days-section {
+  margin-bottom: 20px;
+}
+
+.google-section-label {
+  display: block;
+  font-size: 14px;
+  color: var(--google-gray-700);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.google-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.google-day-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: 1px solid var(--google-gray-300);
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  transition: var(--google-transition);
+  min-height: 48px;
+}
+
+.google-day-btn:hover {
+  background: var(--google-gray-50);
+  border-color: var(--google-gray-400);
+}
+
+.google-day-active {
+  background: var(--google-blue);
+  color: white;
+  border-color: var(--google-blue);
+}
+
+.google-day-active:hover {
+  background: var(--google-blue-hover);
+  border-color: var(--google-blue-hover);
+}
+
+.google-day-initial {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.google-day-full {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+/* Switch estilo Google */
+.google-availability-section {
+  margin-bottom: 16px;
+}
+
+.google-switch-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: var(--google-transition);
+}
+
+.google-switch-label:hover {
+  background: var(--google-gray-50);
+}
+
+.google-switch-input {
+  display: none;
+}
+
+.google-switch-slider {
+  width: 36px;
+  height: 20px;
+  background: var(--google-gray-400);
+  border-radius: 10px;
+  position: relative;
+  transition: var(--google-transition);
+}
+
+.google-switch-input:checked + .google-switch-slider {
+  background: var(--google-blue);
+}
+
+.google-switch-slider::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: var(--google-transition);
+}
+
+.google-switch-input:checked + .google-switch-slider::before {
+  transform: translateX(16px);
+}
+
+.google-switch-text {
+  font-size: 14px;
+  color: var(--google-gray-700);
+}
+
+/* Input de razón */
+.google-reason-section {
+  margin-bottom: 16px;
+}
+
+.google-reason-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--google-gray-300);
+  border-radius: 6px;
+  font-size: 14px;
+  transition: var(--google-transition);
+}
+
+.google-reason-input:focus {
+  outline: none;
+  border-color: var(--google-blue);
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+/* Mensaje de error */
+.google-error-message {
+  background: #fce8e6;
+  color: var(--google-red);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 16px;
+  border-left: 3px solid var(--google-red);
+}
+
+/* Footer del modal */
+.google-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--google-gray-200);
+  background: var(--google-gray-50);
+}
+
+.google-footer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Botones estilo Google */
+.google-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--google-transition);
+  min-width: 64px;
+}
+
+.google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.google-btn-primary {
+  background: var(--google-blue);
+  color: white;
+}
+
+.google-btn-primary:hover:not(:disabled) {
+  background: var(--google-blue-hover);
+}
+
+.google-btn-secondary {
+  background: transparent;
+  color: var(--google-gray-700);
+}
+
+.google-btn-secondary:hover:not(:disabled) {
+  background: var(--google-gray-200);
+}
+
+.google-btn-delete {
+  background: transparent;
+  color: var(--google-red);
+}
+
+.google-btn-delete:hover:not(:disabled) {
+  background: #fce8e6;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .google-modal-content {
+    width: 95%;
+    margin: 16px;
+  }
+
+  .google-modal-header,
+  .google-modal-body,
+  .google-modal-footer {
+    padding: 16px;
+  }
+
+  .google-days-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .google-time-inputs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .google-time-separator {
+    margin: 0;
+    text-align: center;
+  }
+
+  .google-modal-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .google-footer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* Optimizaciones de rendimiento */
+.google-modal-overlay {
+  will-change: opacity;
+}
+
+.google-modal-content {
+  will-change: transform, opacity;
+}
+
+.google-day-btn,
+.google-btn {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Prevenir flashes en iOS */
+.google-modal-content {
+  -webkit-tap-highlight-color: transparent;
+}

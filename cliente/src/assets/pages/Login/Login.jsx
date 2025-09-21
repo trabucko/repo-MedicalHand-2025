@@ -42,7 +42,7 @@ function Login() {
       ) {
         setError("Correo o contraseña incorrecta.");
       } else {
-        setError("Ocurrió un error inesperado.");
+        setError("Correo o contraseña incorrectos.");
       }
     }
   };

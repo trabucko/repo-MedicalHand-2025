@@ -23,7 +23,7 @@ const Wrapper = styled.div`
     display: block;
     height: 3px; /* ANTES: 4px */
     width: 100%; /* ANTES: 80% con un margin-left extraño, 100% es más común */
-    background: #101e4fff;
+    background: #fefeffff;
     border-radius: 2px;
     transition: all 0.3s ease;
     /* Se eliminó margin-left: 40% para un centrado correcto */
