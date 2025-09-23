@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom"; // <-- AÑADIDO useNavigate
 import {
   collection,
   onSnapshot,
@@ -8,66 +8,92 @@ import {
   doc,
   writeBatch,
   serverTimestamp,
+  getDoc, // <-- AÑADIDO getDoc
 } from "firebase/firestore";
-import { db } from "../../../../firebase"; // Ajusta la ruta a tu config de firebase
+import { db } from "../../../../firebase";
 import { useAuth } from "../../../context/AuthContext";
 
-// --- CORRECCIONES ---
-// 1. Importa el componente Sidebar (la ruta puede necesitar ajuste)
 import Sidebar from "../../Sidebar/Sidebar";
-// 2. Importa el Header (ajustando la ruta a una más estándar)
 import Header from "../../components_Doctor/HorarioMedico/headerDoctor/header";
-// 3. Importa los estilos del layout
 
 const DoctorLayout = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth(); // <-- AÑADIDO logout
+  const navigate = useNavigate(); // <-- AÑADIDO navigate
+
+  // --- Estados de tu código original (todos se conservan) ---
   const [selectedConsultorio, setSelectedConsultorio] = useState(null);
   const [availableConsultorios, setAvailableConsultorios] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // La declaración de estos estados es correcta
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(true); // Inicia abierto
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
+  // --- Estado nuevo para el perfil del doctor ---
+  const [doctorProfile, setDoctorProfile] = useState(null); // <-- AÑADIDO
+
   useEffect(() => {
-    if (!user || !user.claims?.hospitalId) {
+    if (!user) {
       setLoading(false);
       return;
     }
-    const consultoriosRef = collection(
-      db,
-      "hospitals",
-      user.claims.hospitalId,
-      "dr_office"
-    );
-    const q = query(
-      consultoriosRef,
-      where("assignedDoctorId", "in", [null, user.uid])
-    );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const consultoriosData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-        hospitalId: user.claims.hospitalId,
-      }));
-      setAvailableConsultorios(consultoriosData);
-      const alreadyAssigned = consultoriosData.find(
-        (c) => c.assignedDoctorId === user.uid
+    // --- AÑADIDO: Lógica para obtener el perfil del doctor ---
+    const fetchDoctorProfile = async () => {
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setDoctorProfile(docSnap.data());
+      } else {
+        console.error("No se encontró el perfil del doctor.");
+      }
+    };
+    fetchDoctorProfile();
+
+    // --- Lógica original para los consultorios (se conserva intacta) ---
+    if (user.claims?.hospitalId) {
+      const consultoriosRef = collection(
+        db,
+        "hospitals",
+        user.claims.hospitalId,
+        "dr_office"
       );
-      setSelectedConsultorio(alreadyAssigned || null);
+      const q = query(
+        consultoriosRef,
+        where("assignedDoctorId", "in", [null, user.uid])
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const consultoriosData = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          hospitalId: user.claims.hospitalId,
+        }));
+        setAvailableConsultorios(consultoriosData);
+        const alreadyAssigned = consultoriosData.find(
+          (c) => c.assignedDoctorId === user.uid
+        );
+        setSelectedConsultorio(alreadyAssigned || null);
+        setLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
       setLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
   }, [user]);
 
+  // --- AÑADIDO: Función de Logout ---
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
+  };
+
+  // --- Lógica original para liberar consultorio (se conserva intacta) ---
   const handleReleaseConsultorio = async () => {
     if (!selectedConsultorio) return;
-
     const consultorioToRelease = selectedConsultorio;
     setSelectedConsultorio(null);
-
     const batch = writeBatch(db);
     const consultorioRef = doc(
       db,
@@ -76,7 +102,6 @@ const DoctorLayout = () => {
       "dr_office",
       consultorioToRelease.id
     );
-
     try {
       batch.update(consultorioRef, {
         status: "disponible",
@@ -101,20 +126,27 @@ const DoctorLayout = () => {
         isSidebarOpen ? "sidebar-open" : ""
       }`}
     >
-      {/* Ahora Sidebar está definido y puede ser renderizado */}
-      <Sidebar isOpen={isSidebarOpen} />
+      {/* Sidebar ahora recibe todas las props necesarias */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        fullName={doctorProfile?.fullName} // <-- AÑADIDO
+        hospitalName={doctorProfile?.hospitalName} // <-- AÑADIDO
+        role={doctorProfile?.role} // <-- AÑADIDO
+        handleLogout={handleLogout} // <-- AÑADIDO
+      />
 
       <div className="doctor-main-view">
+        {/* Tu Header se queda como estaba */}
         <Header
           user={user}
           consultorio={selectedConsultorio}
           toggleSidebar={toggleSidebar}
-          // --- DATOS QUE FALTABAN ---
-          db={db} // <-- AÑADIR: Pasa la instancia de la base de datos.
-          hospitalId={user?.claims?.hospitalId} // <-- AÑADIR: Es buena práctica pasarlo también.
-          onConsultorioChange={setSelectedConsultorio} // <-- CORREGIR: Cambia el nombre de la prop y pasa la función para actualizar el estado.
+          db={db}
+          hospitalId={user?.claims?.hospitalId}
+          onConsultorioChange={setSelectedConsultorio}
         />
         <main className="doctor-page-content">
+          {/* Tu Outlet se queda como estaba, con todo el contexto */}
           <Outlet
             context={{
               selectedConsultorio,
