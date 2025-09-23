@@ -1,7 +1,5 @@
-import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
-
-// Iconos de la barra de navegación
+import React, { useState } from "react";
+import { NavLink } from "react-router-dom";
 import {
   FaBell,
   FaChartLine,
@@ -9,22 +7,79 @@ import {
   FaCalendarDay,
   FaUserInjured,
   FaStethoscope,
+  FaDoorOpen,
+  FaExchangeAlt,
+  FaSignOutAlt,
+  FaTimes,
 } from "react-icons/fa";
-
+import { doc, updateDoc } from "firebase/firestore";
 import "./Header.css";
 import MenuHamburguer from "../../../menu_hamburguesa/menu";
 
-const Header = ({ user, toggleSidebar }) => {
-  const location = useLocation();
+const Header = ({
+  user,
+  toggleSidebar,
+  consultorio,
+  db,
+  hospitalId,
+  onConsultorioChange,
+}) => {
+  const [showModal, setShowModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Función para verificar si la ruta está activa
-  const isActiveRoute = (path) => {
-    // Si es la ruta principal, verifica coincidencia exacta
-    if (path === "/dashboard-doctor") {
-      return location.pathname === path;
+  const handleConsultorioClick = () => {
+    if (consultorio) {
+      setShowModal(true);
     }
-    // Para otras rutas, verifica si la ruta actual comienza con el path
-    return location.pathname.startsWith(path);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  const handleLeaveConsultorio = async () => {
+    if (!consultorio || !consultorio.id || !db || !hospitalId) {
+      console.error(
+        "Error: Faltan datos para procesar la salida del consultorio."
+      );
+      return;
+    }
+
+    setIsUpdating(true);
+
+    const consultorioRef = doc(
+      db,
+      "hospitals",
+      hospitalId,
+      "dr_office",
+      consultorio.id
+    );
+
+    try {
+      await updateDoc(consultorioRef, {
+        status: "disponible",
+        assignedDoctorId: null,
+        assignedDoctorName: null,
+      });
+
+      console.log("El consultorio ha sido liberado exitosamente.");
+
+      if (onConsultorioChange) {
+        onConsultorioChange(null);
+      }
+    } catch (error) {
+      console.error("Error al actualizar el estado del consultorio:", error);
+    } finally {
+      setIsUpdating(false);
+      setShowModal(false);
+    }
+  };
+
+  const handleChangeConsultorio = () => {
+    if (onConsultorioChange) {
+      onConsultorioChange(null);
+    }
+    setShowModal(false);
   };
 
   return (
@@ -32,11 +87,28 @@ const Header = ({ user, toggleSidebar }) => {
       <header className="app-header">
         <div className="header-left">
           <div className="header-title-group">
-            <h1>Panel Médico</h1>
-            <p>Bienvenido, Dr. {user?.claims?.name || "Usuario"}</p>
+            <h1 className="ti">Panel Médico</h1>
+            <p>Bienvenido, Dr. {user?.fullName || "Usuario"}</p>
           </div>
         </div>
         <div className="header-right">
+          <div
+            className={`header-consultorio-info ${
+              consultorio ? "assigned" : ""
+            }`}
+            onClick={handleConsultorioClick}
+            title={
+              consultorio ? "Gestionar consultorio" : "Sin consultorio asignado"
+            }
+          >
+            <FaDoorOpen className="consultorio-icon" />
+            <span className="consultorio-iam">
+              {consultorio
+                ? `Consultorio: ${consultorio.name}`
+                : "Consultorio: No asignado"}
+            </span>
+          </div>
+
           <button className="notification-btn">
             <FaBell />
             <span className="notification-badge">3</span>
@@ -45,14 +117,62 @@ const Header = ({ user, toggleSidebar }) => {
         </div>
       </header>
 
-      {/* Barra de navegación con NavLink */}
+      {showModal && (
+        <div className="consultorio-modal-overlay" onClick={handleCloseModal}>
+          <div
+            className="consultorio-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3>Acciones del Consultorio</h3>
+              <button className="modal-close-btn" onClick={handleCloseModal}>
+                <FaTimes />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>
+                Estás asignado al <strong>{consultorio?.name}</strong>. ¿Qué
+                deseas hacer?
+              </p>
+              <div className="consultorio-options">
+                <button
+                  className="option-btn leave-btn"
+                  onClick={handleLeaveConsultorio}
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    "Saliendo..."
+                  ) : (
+                    <>
+                      <FaSignOutAlt /> Salir del consultorio
+                    </>
+                  )}
+                </button>
+                <button
+                  className="option-btn change-btn"
+                  onClick={handleChangeConsultorio}
+                  disabled={isUpdating}
+                >
+                  <FaExchangeAlt /> Cambiar de consultorio
+                </button>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={handleCloseModal}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="header-sub-nav">
         <NavLink
           to="/dashboard-doctor"
           className={({ isActive }) =>
             isActive ? "header-nav-btn active" : "header-nav-btn"
           }
-          end // Esto asegura que solo se active en la ruta exacta
+          end
         >
           <FaChartLine /> Resumen
         </NavLink>

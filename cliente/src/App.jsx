@@ -12,16 +12,16 @@ import {
   useLoading,
 } from "../src/assets/context/LoadingContext.jsx";
 
-// Tus componentes de página
+// --- Importaciones de Componentes y Páginas ---
 import Login from "../src/assets/pages/Login/Login.jsx";
-import DoctorDashboard from "./assets/pages/hospitalDoctor/DoctorDashboard.jsx";
 import Administracion from "./assets/pages/Administracion/Administracion.jsx";
-import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
 import ConsultaExterna from "./assets/pages/ConsultaExterna/ConsultaExterna.jsx";
+import DoctorDashboard from "./assets/pages/hospitalDoctor/DoctorDashboard.jsx";
 import DoctorView from "./assets/components/components_Doctor/HorarioMedico/DoctorView.jsx";
-import ProtectedLayout from "./assets/components/ProtectedLayout/ProtectedLayout.jsx"; // ✅ ¡ERROR CORREGIDO!
+import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
+import DoctorLayout from "./assets/components/components_Doctor/Doctor_Layout/Doctor_Layout.jsx"; // <-- ¡NUEVA IMPORTACIÓN CLAVE!
 
-// --- Componentes de Rutas ---
+// --- Componentes de Rutas (sin cambios) ---
 
 const GuestRoute = () => {
   const { user, loading } = useAuth();
@@ -63,7 +63,7 @@ const AppLoader = () => {
   return isLoading ? <GlobalLoader /> : null;
 };
 
-// --- Componente Principal App ---
+// --- Componente Principal App (REESTRUCTURADO) ---
 
 function App() {
   return (
@@ -72,57 +72,47 @@ function App() {
         <Router>
           <AppLoader />
           <Routes>
-            {/* --- RUTAS PARA INVITADOS --- */}
+            {/* --- RUTAS PARA INVITADOS (Login y raíz) --- */}
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Login />} />
             </Route>
 
-            {/* --- RUTAS PROTEGIDAS USANDO EL LAYOUT --- */}
+            {/* --- LAYOUT PROTEGIDO PARA EL ROL DE DOCTOR --- */}
             <Route
-              path="/"
+              path="/dashboard-doctor"
               element={
-                <ProtectedRoute>
-                  <ProtectedLayout />
+                <ProtectedRoute requiredRole="hospital_doctor">
+                  <DoctorLayout />
                 </ProtectedRoute>
               }
             >
-              <Route
-                path="dashboard-doctor"
-                element={
-                  <ProtectedRoute requiredRole="hospital_doctor">
-                    <DoctorDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="dashboard-doctor/horario"
-                element={
-                  <ProtectedRoute requiredRole="hospital_doctor">
-                    <DoctorView />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="consulta-externa"
-                element={
-                  <ProtectedRoute requiredRole="hospital_monitor">
-                    <ConsultaExterna />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="administracion/*"
-                element={
-                  <ProtectedRoute requiredRole="hospital_administrador">
-                    <Administracion />
-                  </ProtectedRoute>
-                }
-              />
+              {/* Las páginas hijas se renderizan DENTRO del DoctorLayout */}
+              <Route index element={<DoctorDashboard />} />
+              <Route path="horario" element={<DoctorView />} />
+              {/* Agrega aquí otras rutas del doctor, ej: <Route path="pacientes" element={<PatientsPage />} /> */}
             </Route>
 
+            {/* --- RUTAS PROTEGIDAS PARA OTROS ROLES --- */}
+            <Route
+              path="/consulta-externa"
+              element={
+                <ProtectedRoute requiredRole="hospital_monitor">
+                  <ConsultaExterna />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/administracion"
+              element={
+                <ProtectedRoute requiredRole="hospital_administrador">
+                  <Administracion />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Ruta para cualquier otra URL no encontrada */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
       </AuthProvider>

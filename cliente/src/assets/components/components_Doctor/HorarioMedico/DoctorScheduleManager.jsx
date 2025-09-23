@@ -19,7 +19,7 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
 
   useEffect(() => {
     if (!user || !hospitalId || !consultorio?.id) {
-      setSchedules([]); // Limpia los horarios si no hay consultorio
+      setSchedules([]);
       setLoading(false);
       return;
     }
@@ -36,9 +36,7 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
     const unsubscribe = onSnapshot(schedulesRef, (snapshot) => {
       const schedulesData = snapshot.docs.map((doc) => {
         const data = doc.data();
-        // 🚨 IMPORTANTE: Convierte Timestamps de Firebase a objetos Date de JavaScript
-        // React Big Calendar necesita objetos Date para funcionar.
-        // Asegúrate de que tus campos de fecha se llamen 'start' y 'end' o ajústalo.
+        // Convierte Timestamps de Firebase a objetos Date para React Big Calendar
         return {
           id: doc.id,
           ...data,
@@ -55,11 +53,22 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
 
   const handleAddSchedule = useCallback(
     async (scheduleData) => {
-      // Verifica que tengas la información necesaria
       if (!user || !hospitalId || !consultorio?.id) {
         console.error("Faltan datos para añadir el horario.");
         return;
       }
+
+      if (
+        !(scheduleData.start instanceof Date) ||
+        !(scheduleData.end instanceof Date)
+      ) {
+        console.error(
+          "Error de Datos: El evento no tiene fechas de inicio o fin válidas.",
+          scheduleData
+        );
+        return;
+      }
+
       const schedulesRef = collection(
         db,
         "hospitals",
@@ -68,14 +77,40 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
         consultorio.id,
         "schedules"
       );
+
       try {
-        // 🔥 LÓGICA AÑADIDA
-        await addDoc(schedulesRef, {
-          ...scheduleData,
-          createdAt: serverTimestamp(), // Opcional: para saber cuándo se creó
-          doctorId: user.uid, // Opcional: para saber qué doctor lo creó
-        });
-        console.log("Horario añadido con éxito");
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // 1. Obtenemos el nombre del día de la semana a partir de la fecha de inicio.
+        const isAvailable = scheduleData.isAvailable !== false;
+
+        const dayNames = [
+          "Domingo",
+          "Lunes",
+          "Martes",
+          "Miércoles",
+          "Jueves",
+          "Viernes",
+          "Sábado",
+        ];
+        const dayOfWeek = dayNames[scheduleData.start.getDay()];
+
+        // 2. Creamos el objeto que se guardará en Firestore.
+        //    Ahora `start` y `end` son las fechas completas que nos da el calendario.
+        const dataToSave = {
+          title:
+            scheduleData.title ||
+            (isAvailable ? "Horario Disponible" : "No Disponible"),
+          start: scheduleData.start,
+          end: scheduleData.end,
+          isAvailable: isAvailable,
+          reason: scheduleData.reason || "", // Aseguramos que el campo reason exista
+          createdAt: serverTimestamp(),
+          doctorId: user.uid,
+        };
+        // --- FIN DE LA MODIFICACIÓN ---
+
+        await addDoc(schedulesRef, dataToSave);
+        console.log("Horario añadido con éxito", dataToSave);
       } catch (error) {
         console.error("Error al añadir el horario: ", error);
       }
@@ -99,8 +134,6 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
         scheduleData.id
       );
       try {
-        // 🔥 LÓGICA AÑADIDA
-        // No incluyas el ID en los datos que actualizas
         const { id, ...dataToUpdate } = scheduleData;
         await updateDoc(scheduleDocRef, dataToUpdate);
         console.log("Horario actualizado con éxito");
@@ -127,7 +160,6 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
         scheduleId
       );
       try {
-        // 🔥 LÓGICA AÑADIDA
         await deleteDoc(scheduleDocRef);
         console.log("Horario eliminado con éxito");
       } catch (error) {
@@ -141,7 +173,6 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
     return <div>Cargando horarios...</div>;
   }
 
-  // Asegúrate de pasar un `consultorio` seleccionado para renderizar el calendario
   if (!consultorio) {
     return (
       <div>Por favor, selecciona un consultorio para ver los horarios.</div>

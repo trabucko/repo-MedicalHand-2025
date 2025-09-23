@@ -11,7 +11,6 @@ const ScheduleModal = React.lazy(() =>
 );
 import CalendarWrapper from "./CalendarWrapper";
 
-// --- Configuración de Moment.js ---
 moment.locale("es");
 const localizer = momentLocalizer(moment);
 
@@ -51,31 +50,32 @@ const HorarioMedico = ({
   const [view, setView] = useState("week");
   const [date, setDate] = useState(new Date());
 
+  // ✅ ================== INICIO DE LA ACTUALIZACIÓN ================== ✅
+  // Esta lógica ahora procesará AMBOS tipos de horarios.
   const calendarEvents = useMemo(() => {
-    const now = moment();
-    return schedules
-      .filter((schedule) => {
-        const hasValidTimes =
-          schedule &&
-          typeof schedule.startTime === "string" &&
-          schedule.startTime &&
-          typeof schedule.endTime === "string" &&
-          schedule.endTime;
-        if (!hasValidTimes) {
-          console.warn("Horario ignorado por datos incompletos:", schedule);
-        }
-        return hasValidTimes;
-      })
-      .flatMap((schedule) => {
-        if (!schedule.days || schedule.days.length === 0) {
-          return [];
-        }
+    const now = moment(); // Base para horarios recurrentes
+    return schedules.flatMap((schedule) => {
+      // CASO 1: Es un horario específico con fechas completas (Formato Nuevo)
+      if (schedule.start && schedule.end) {
+        return [
+          {
+            title: schedule.title || "Reservado",
+            start: schedule.start, // Ya es un objeto Date
+            end: schedule.end, // Ya es un objeto Date
+            resource: schedule,
+          },
+        ];
+      }
+
+      // CASO 2: Es un horario recurrente (Formato Antiguo)
+      if (schedule.startTime && schedule.endTime && schedule.days) {
         return schedule.days.map((day) => {
           const dayIndex = momentDaysOfWeek.indexOf(day);
           const [startHour, startMinute] = schedule.startTime
             .split(":")
             .map(Number);
           const [endHour, endMinute] = schedule.endTime.split(":").map(Number);
+
           const dayDate = now.clone().day(dayIndex + 1);
           const startDate = dayDate
             .clone()
@@ -87,6 +87,7 @@ const HorarioMedico = ({
             .hour(endHour)
             .minute(endMinute)
             .toDate();
+
           return {
             title: schedule.isAvailable
               ? "Disponible"
@@ -96,14 +97,19 @@ const HorarioMedico = ({
             resource: schedule,
           };
         });
-      });
-  }, [schedules]);
+      }
 
-  // ✅ CAMBIO 1: Modificamos minTime y maxTime para que abarquen 24 horas.
+      // Si no es ninguno de los dos, es un dato inválido y se ignora.
+      console.warn("Horario ignorado por formato desconocido:", schedule);
+      return []; // Retorna un array vacío para ser filtrado por flatMap
+    });
+  }, [schedules]);
+  // ✅ =================== FIN DE LA ACTUALIZACIÓN =================== ✅
+
   const { minTime, maxTime } = useMemo(
     () => ({
-      minTime: moment().startOf("day").toDate(), // 00:00
-      maxTime: moment().endOf("day").toDate(), // 23:59
+      minTime: moment().startOf("day").toDate(),
+      maxTime: moment().endOf("day").toDate(),
     }),
     []
   );
@@ -118,14 +124,10 @@ const HorarioMedico = ({
         opacity: 0.9,
         color: "white",
         border: "0px",
-        padding: "20px 10px", // Mantiene tu padding para la altura
-
-        // ✅ --- INICIO DE LOS CAMBIOS ---
-        display: "flex", // 1. Convierte el cuadro en un contenedor flexible
-        alignItems: "center", // 2. Centra el contenido verticalmente
-        justifyContent: "center", // 3. Centra el contenido horizontalmente
-        // ✅ --- FIN DE LOS CAMBIOS ---
-
+        padding: "20px 10px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         backgroundColor:
           event.resource && !event.resource.isAvailable
             ? "#d53535ff"
@@ -140,6 +142,8 @@ const HorarioMedico = ({
   }, []);
 
   const handleSelectEvent = useCallback((event) => {
+    // Para horarios específicos, el 'resource' es el horario completo
+    // Para recurrentes, también lo es. Esta lógica es universal.
     setModalState({ type: "edit", schedule: event.resource });
   }, []);
 
@@ -148,15 +152,23 @@ const HorarioMedico = ({
   }, []);
 
   const handleSaveSchedule = useCallback(
-    (scheduleData) => {
-      if (scheduleData.id) {
-        onUpdateSchedule(scheduleData);
+    (dataFromModal) => {
+      if (dataFromModal.id) {
+        onUpdateSchedule(dataFromModal);
       } else {
-        onAddSchedule(scheduleData);
+        const finalSchedule = {
+          // Asegúrate que tu modal envíe algo como:
+          // { isAvailable: false, reason: "Cita personal" }
+          // o { isAvailable: true, title: "Espacio extra" }
+          ...dataFromModal,
+          start: modalState.start,
+          end: modalState.end,
+        };
+        onAddSchedule(finalSchedule);
       }
       handleCloseModal();
     },
-    [onUpdateSchedule, onAddSchedule, handleCloseModal]
+    [modalState, onUpdateSchedule, onAddSchedule, handleCloseModal]
   );
 
   const handleDeleteSchedule = useCallback(
@@ -195,7 +207,6 @@ const HorarioMedico = ({
           messages={calendarMessages}
           min={minTime}
           max={maxTime}
-          // ✅ CAMBIO 2: Añadimos estas props para hacer las celdas más altas.
           step={60}
           timeslots={1}
         />

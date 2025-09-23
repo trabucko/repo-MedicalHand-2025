@@ -11,7 +11,7 @@ const DoctorConsultorioSelector = ({ consultorios, onSelect }) => {
         <div className="dcs-header-icon">
           <FaUserDoctor />
         </div>
-        <h2>Mis Consultorios Disponibles</h2>
+        <h2>Consultorios Disponibles</h2>
         <p>
           Seleccione un consultorio para gestionar su agenda y horarios de
           atención

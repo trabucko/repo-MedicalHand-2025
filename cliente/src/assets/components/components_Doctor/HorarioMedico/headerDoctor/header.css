@@ -15,6 +15,11 @@
   box-sizing: border-box;
 }
 
+.titulo {
+  display: flex;
+  justify-content: start;
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -93,19 +98,18 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Contenedor para la barra de navegación de pestañas - COLOR #0D3B65 */
+/* Contenedor para la barra de navegación de pestañas */
 .header-sub-nav {
   display: flex;
   padding: 0 1.5rem;
-  background: #0d3b65; /* Color principal solicitado */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Borde sutil */
+  background: #0d3b65;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow-x: auto;
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Ocultar scrollbar pero mantener funcionalidad */
 .header-sub-nav::-webkit-scrollbar {
   display: none;
 }
@@ -120,7 +124,7 @@
   border: none;
   border-bottom: 3px solid transparent;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.8); /* Texto con opacidad */
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
   font-size: 0.9rem;
   text-decoration: none;
@@ -128,35 +132,220 @@
   transition: all 0.2s ease;
 }
 
-/* Efecto al pasar el cursor por encima */
 .header-nav-btn:hover {
   color: #ffffff;
   border-bottom: 3px solid rgba(255, 255, 255, 0.3);
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Estilo para el enlace que está activo */
 .header-nav-btn.active {
   color: #ffffff;
   border-bottom-color: #ffffff;
   background-color: rgba(255, 255, 255, 0.1);
 }
+/* --- ESTILOS MINIMALISTAS PARA EL CONSULTORIO --- */
+.header-consultorio-info {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
 
-/* Responsive design */
+.header-consultorio-info:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.consultorio-icon {
+  margin-right: 0.5rem;
+  font-size: 1.1rem; /* Ligeramente más pequeño */
+  color: #ffffff;
+}
+
+.consultorio-iam {
+  font-weight: 500;
+  margin-right: 0.8rem;
+  color: #ffffff;
+  font-size: 0.8rem;
+}
+
+.consultorio-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem; /* Espacio reducido */
+}
+
+.consultorio-change-text {
+  font-size: 0.75rem; /* Texto más pequeño */
+  opacity: 0.6; /* <-- MODIFICADO: Más transparente por defecto */
+  transition: opacity 0.3s ease; /* <-- MODIFICADO: Añade transición */
+}
+
+.consultorio-change-icon {
+  font-size: 0.8rem; /* <-- MODIFICADO: Icono más pequeño */
+  opacity: 0.6; /* <-- MODIFICADO: Más transparente por defecto */
+  transition: opacity 0.3s ease; /* <-- MODIFICADO: Añade transición */
+}
+
+/* Al pasar el cursor, el texto y el icono se vuelven más visibles */
+.header-consultorio-info:hover .consultorio-change-text,
+.header-consultorio-info:hover .consultorio-change-icon {
+  opacity: 1; /* <-- MODIFICADO: Totalmente visible en hover */
+}
+
+/* --- ESTILOS DEL MODAL (SIN CAMBIOS) --- */
+.consultorio-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.consultorio-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 1.5rem;
+  background: #0d3b65;
+  color: white;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  margin: 0 0 1.5rem 0;
+  color: #4a5568;
+  line-height: 1.5;
+}
+
+.consultorio-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.leave-btn {
+  background: #e53e3e;
+  color: white;
+}
+
+.leave-btn:hover {
+  background: #c53030;
+}
+
+.change-btn {
+  background: #3182ce;
+  color: white;
+}
+
+.change-btn:hover {
+  background: #2b6cb0;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cancel-btn {
+  padding: 0.5rem 1rem;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: #cbd5e0;
+}
+
+/* --- ESTILOS RESPONSIVE (SIN CAMBIOS) --- */
 @media (max-width: 768px) {
   .header-title-group h1 {
     font-size: 1.2rem;
   }
-
   .header-title-group p {
     font-size: 0.8rem;
   }
-
   .header-nav-btn {
     padding: 0.8rem 1rem;
     font-size: 0.8rem;
   }
-
   .header-nav-btn svg {
     font-size: 0.9rem;
   }
@@ -166,22 +355,29 @@
   .app-header {
     padding: 1rem;
   }
-
   .header-sub-nav {
     padding: 0 1rem;
   }
-
   .header-nav-btn {
     padding: 0.7rem 0.8rem;
     font-size: 0.75rem;
   }
-
   .header-nav-btn span {
-    display: none; /* Ocultar texto en pantallas muy pequeñas */
+    display: none;
   }
-
   .header-nav-btn svg {
     font-size: 1rem;
     margin-right: 0;
+  }
+  .consultorio-modal {
+    width: 95%;
+    margin: 0 1rem;
+  }
+  .header-consultorio-info {
+    margin-left: 0.5rem;
+    padding: 0.4rem 0.6rem;
+  }
+  .consultorio-change-text {
+    display: none;
   }
 }
