@@ -2,97 +2,146 @@ import React, { useState, useEffect } from "react";
 import "./Solicitudes.css";
 import { FaUserMd, FaFilter, FaTimes } from "react-icons/fa";
 
-// 1. IMPORTA el componente para mostrar los detalles
-import InfoPaciente from "./infoPaciente/infoPaciente"; // Asegúrate de que la ruta sea correcta
+// IMPORTACIÓN DE COMPONENTES DE VISTA
+import InfoPaciente from "./infoPaciente/infoPaciente";
+import SelectConsultorio from "./selectConsultorio/SelectConsultorio";
 
-// --- AÑADIDOS DE FIREBASE ---
+// AÑADIDOS DE FIREBASE
 import { db } from "../../../../firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  getDocs,
+} from "firebase/firestore";
 
 const Solicitud = () => {
-  // --- Estados ---
+  // --- Estados de datos y UI ---
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showInfoPaciente, setShowInfoPaciente] = useState(false);
   const [selectedSolicitud, setSelectedSolicitud] = useState(null);
+
+  // --- Estados para controlar las vistas ---
+  const [showInfoPaciente, setShowInfoPaciente] = useState(false);
+  const [showGestionar, setShowGestionar] = useState(false); // Estado para la nueva vista
+
+  // --- Estados para filtros y ordenación ---
   const [showModal, setShowModal] = useState(false);
   const [activeFilters, setActiveFilters] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("más-reciente");
 
   useEffect(() => {
-    // Escuchamos en tiempo real la colección 'citas' por solicitudes pendientes
+    console.log("Iniciando useEffect para buscar solicitudes...");
     const citasRef = collection(db, "citas");
     const q = query(citasRef, where("status", "==", "pendiente"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      // --- LÓGICA SIMPLIFICADA ---
-      // Ya no hay segunda búsqueda. Mapeamos directamente los datos de cada cita.
-      const solicitudesData = snapshot.docs.map((doc) => {
-        const citaData = doc.data();
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      console.log(
+        `LOG 1: Se encontraron ${snapshot.size} citas con estado 'pendiente'.`
+      );
+      if (snapshot.empty) {
+        setLoading(false);
+        setSolicitudes([]);
+        return;
+      }
 
-        // El objeto se crea usando únicamente los campos del documento de la 'cita'
-        return {
-          id: doc.id, // Usamos el ID del documento de la cita
-          paciente: citaData.fullName, // Leído directamente de la cita
+      const solicitudesPromises = snapshot.docs.map(async (doc) => {
+        const citaData = doc.data();
+        console.log("LOG 2: Datos de la cita individual:", citaData);
+        let pacienteData = {};
+
+        if (citaData.uid) {
+          const usersRef = collection(db, "usuarios_movil");
+          const userQuery = query(usersRef, where("uid", "==", citaData.uid));
+          const userSnapshot = await getDocs(userQuery);
+
+          console.log(
+            `LOG 3: Buscando paciente con UID (${citaData.uid})... Encontrados: ${userSnapshot.size}`
+          );
+          if (!userSnapshot.empty) {
+            pacienteData = userSnapshot.docs[0].data();
+          }
+        } else {
+          console.warn(
+            "LOG 3 ADVERTENCIA: Esta cita no tiene un campo 'uid'.",
+            citaData
+          );
+        }
+
+        const objetoFinal = {
+          id: doc.id,
+          paciente: pacienteData.personalInfo?.firstName
+            ? `${pacienteData.personalInfo.firstName} ${pacienteData.personalInfo.lastName}`
+            : citaData.fullName || "Paciente sin nombre",
           fecha: citaData.requestTimestamp.toDate().toLocaleDateString("es-ES"),
           motivo: citaData.reason,
           estado: "Pendiente",
           especialidad: citaData.specialty,
-
-          // Pasamos el objeto completo a InfoPaciente
-          datosCompletos: citaData,
+          citaCompleta: citaData,
+          pacienteCompleto: pacienteData,
         };
+        console.log("LOG 4: Objeto final que se va a retornar:", objetoFinal);
+        return objetoFinal;
       });
 
-      setSolicitudes(solicitudesData);
+      const solicitudesCompletas = await Promise.all(solicitudesPromises);
+      console.log("LOG 5: Arreglo completo final:", solicitudesCompletas);
+      setSolicitudes(solicitudesCompletas);
       setLoading(false);
     });
 
-    // Limpiamos la suscripción al desmontar el componente
     return () => unsubscribe();
   }, []);
 
-  // --- Funciones para la interfaz ---
+  // --- Funciones Handler para la Interfaz ---
+
+  // Muestra los detalles del paciente
   const handleOpenInfoPaciente = (solicitud) => {
     setSelectedSolicitud(solicitud);
     setShowInfoPaciente(true);
   };
 
+  // Cierra los detalles del paciente y vuelve a la lista
   const handleCloseInfoPaciente = () => {
     setShowInfoPaciente(false);
     setSelectedSolicitud(null);
   };
 
+  // Muestra la vista para gestionar la solicitud (llamada desde InfoPaciente)
+  const handleGestionarSolicitud = (solicitud) => {
+    setSelectedSolicitud(solicitud);
+    setShowInfoPaciente(false); // Oculta la vista de detalles
+    setShowGestionar(true); // Muestra la vista de gestión
+  };
+
+  // Cierra la vista de gestión y vuelve a la lista
+  const handleCloseGestionar = () => {
+    setShowGestionar(false);
+    setSelectedSolicitud(null);
+  };
+
   const toggleModal = () => setShowModal(!showModal);
 
-  // (El resto de tus funciones y lógica de filtrado no necesitan cambios)
-  // (El resto de tus funciones y lógica de filtrado no necesitan cambios)
+  // Lógica de filtrado y ordenación (sin cambios)
   const filteredAndSortedSolicitudes = solicitudes
     .filter((sol) => {
-      // Aseguramos que el término de búsqueda esté en minúsculas para una comparación insensible
       const searchTermLower = searchTerm.toLowerCase();
-
-      // Verificamos si el término de búsqueda coincide con alguno de los campos
-      // Usamos (sol.campo || "") para evitar errores si algún dato viene nulo o indefinido
       const matchesSearchTerm =
         (sol.paciente || "").toLowerCase().includes(searchTermLower) ||
         (sol.motivo || "").toLowerCase().includes(searchTermLower) ||
         (sol.especialidad || "").toLowerCase().includes(searchTermLower);
 
-      // Aquí puedes añadir la lógica de tus otros filtros si los tienes
       if (
         activeFilters.especialidad &&
         sol.especialidad !== activeFilters.especialidad
       ) {
         return false;
       }
-
-      // Devolvemos true si el término de búsqueda coincide
       return matchesSearchTerm;
     })
     .sort((a, b) => {
-      // Aquí va tu lógica de ordenamiento (la que tenías antes)
       if (sortOption === "más-reciente") {
         const dateA = new Date(a.fecha.split("/").reverse().join("-"));
         const dateB = new Date(b.fecha.split("/").reverse().join("-"));
@@ -112,53 +161,67 @@ const Solicitud = () => {
     );
   }
 
+  // --- LÓGICA DE RENDERIZADO CONDICIONAL ---
+
+  // Vista para GESTIONAR la solicitud
+  if (showGestionar) {
+    return (
+      <SelectConsultorio
+        solicitud={selectedSolicitud}
+        onClose={handleCloseGestionar}
+      />
+    );
+  }
+
+  // Vista para VER DETALLES del paciente
+  if (showInfoPaciente) {
+    return (
+      <InfoPaciente
+        solicitud={selectedSolicitud}
+        onClose={handleCloseInfoPaciente}
+        onGestionar={handleGestionarSolicitud} // Se pasa la función para navegar
+      />
+    );
+  }
+
+  // Vista PRINCIPAL (lista de solicitudes)
   return (
     <div className="content-area">
       <h2 className="solicitudes-title">
-        {showInfoPaciente
-          ? "Detalles de la Solicitud"
-          : "Bandeja de Consultas Médica Entrantes"}
+        Bandeja de Consultas Médica Entrantes
       </h2>
+      <div className="filtro-container">{/* Tu JSX de filtros aquí */}</div>
 
-      {showInfoPaciente ? (
-        <InfoPaciente
-          solicitud={selectedSolicitud}
-          onClose={handleCloseInfoPaciente}
-        />
+      {solicitudes.length === 0 ? (
+        <div className="no-solicitudes">
+          <p>No hay solicitudes pendientes por el momento.</p>
+        </div>
       ) : (
-        <>
-          <div className="filtro-container">{/* Tu JSX de filtros aquí */}</div>
-          {solicitudes.length === 0 ? (
-            <div className="no-solicitudes">
-              <p>No hay solicitudes pendientes por el momento.</p>
-            </div>
-          ) : (
-            <ul className="solicitudes-list">
-              {filteredAndSortedSolicitudes.map((sol) => (
-                <li
-                  key={sol.id}
-                  className="solicitud-list-item"
-                  onClick={() => handleOpenInfoPaciente(sol)}
-                >
-                  <div className="list-item-badge">
-                    <span>{sol.estado}</span>
-                  </div>
-                  <div className="list-item-content">
-                    <h3>
-                      <FaUserMd className="list-item-icon" />
-                      {sol.paciente}
-                    </h3>
-                    <p className="list-item-details">
-                      <strong>Fecha:</strong> {sol.fecha} |{" "}
-                      <strong>Motivo:</strong> {sol.motivo}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <ul className="solicitudes-list">
+          {filteredAndSortedSolicitudes.map((sol) => (
+            <li
+              key={sol.id}
+              className="solicitud-list-item"
+              onClick={() => handleOpenInfoPaciente(sol)}
+            >
+              <div className="list-item-badge">
+                <span>{sol.estado}</span>
+              </div>
+              <div className="list-item-content">
+                <h3>
+                  <FaUserMd className="list-item-icon" />
+                  {sol.paciente}
+                </h3>
+                <p className="list-item-details">
+                  <strong>Fecha:</strong> {sol.fecha} | <strong>Motivo:</strong>{" "}
+                  {sol.motivo}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
       )}
+
       {showModal && (
         <div className="modal-overlay">{/* Tu Modal de Filtros */}</div>
       )}

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "./InfoPaciente.css";
 
-const InfoPaciente = ({ solicitud, onClose }) => {
+const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
   const [activeTab, setActiveTab] = useState("general");
 
   // Si no hay datos, muestra un estado de carga
@@ -9,8 +9,15 @@ const InfoPaciente = ({ solicitud, onClose }) => {
     return <div className="paciente-container">Cargando información...</div>;
   }
 
-  // Obtenemos el objeto completo con todos los datos desde la prop.
-  const datos = solicitud.datosCompletos || {};
+  // Separamos los datos para un código más limpio y claro
+  const cita = solicitud.citaCompleta || {};
+  const paciente = solicitud.pacienteCompleto || {};
+
+  // Creamos variables específicas para acceder a la información anidada de forma segura
+  const personalInfo = paciente.personalInfo || {};
+  const contactInfo = paciente.contactInfo || {};
+  const medicalInfo = paciente.medicalInfo || {};
+  const emergencyContact = contactInfo.emergencyContact || {};
 
   // --- FUNCIONES AUXILIARES ---
   const calcularEdad = (fechaNacimiento) => {
@@ -47,38 +54,46 @@ const InfoPaciente = ({ solicitud, onClose }) => {
     }
   };
 
+  // Combinamos nombre y apellido para mostrarlos juntos
+  const nombreCompleto = `${personalInfo.firstName || ""} ${
+    personalInfo.lastName || ""
+  }`.trim();
+
   return (
     <div className="paciente-container">
-      {/* Header ahora usa la variable 'datos' */}
       <header className="paciente-header">
         <div className="header-content">
           <div className="patient-avatar">
             <span>
-              {datos.fullName
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("") || "P"}
+              {(personalInfo.firstName?.[0] || "") +
+                (personalInfo.lastName?.[0] || "") || "P"}
             </span>
           </div>
           <div className="patient-main-info">
-            <h1>{datos.fullName || "Paciente no encontrado"}</h1>
-            <p className="patient-id">ID: {datos.idNumber || "N/A"}</p>
+            <h1>{nombreCompleto || "Paciente no encontrado"}</h1>
+            <p className="patient-id">ID: {personalInfo.idNumber || "N/A"}</p>
             <div className="status-container">
-              <span className={`status-badge ${datos.status}`}>
-                {getStatusIcon(datos.status)}{" "}
-                {datos.status?.charAt(0).toUpperCase() + datos.status?.slice(1)}
+              <span className={`status-badge ${cita.status}`}>
+                {getStatusIcon(cita.status)}{" "}
+                {cita.status?.charAt(0).toUpperCase() + cita.status?.slice(1)}
               </span>
               <span
                 className={`activity-badge ${
-                  datos.isActive ? "active" : "inactive"
+                  cita.isActive ? "active" : "inactive"
                 }`}
               >
-                {datos.isActive ? "● Activo" : "○ Inactivo"}
+                {cita.isActive ? "● Activo" : "○ Inactivo"}
               </span>
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn-primary">Gestionar Solicitud</button>
+            {/* *** SOLUCIÓN: Conectar el botón con la función onGestionar *** */}
+            <button
+              className="btn-primary"
+              onClick={() => onGestionar(solicitud)}
+            >
+              Gestionar Solicitud
+            </button>
             <button className="btn-secondary" onClick={onClose}>
               Volver
             </button>
@@ -86,7 +101,6 @@ const InfoPaciente = ({ solicitud, onClose }) => {
         </div>
       </header>
 
-      {/* Navegación por pestañas (sin cambios) */}
       <nav className="tabs-navigation">
         <button
           className={`tab ${activeTab === "general" ? "active" : ""}`}
@@ -114,38 +128,95 @@ const InfoPaciente = ({ solicitud, onClose }) => {
         </button>
       </nav>
 
-      {/* Contenido de las pestañas ahora usa la variable 'datos' */}
       <div className="tab-content">
         {activeTab === "general" && (
           <div className="info-grid">
+            {/* --- Tarjeta de Información Personal y de Contacto --- */}
             <div className="info-card">
               <div className="card-header">
-                <h3>Información Personal</h3>
+                <h3>Información Personal y de Contacto</h3>
               </div>
               <div className="card-content">
                 <div className="info-item">
                   <label>Nombre Completo</label>
-                  <span>{datos.fullName}</span>
+                  <span>{nombreCompleto || "N/A"}</span>
                 </div>
                 <div className="info-item">
                   <label>Identificación</label>
-                  <span>{datos.idNumber}</span>
+                  <span>{personalInfo.idNumber || "N/A"}</span>
                 </div>
                 <div className="info-item">
                   <label>Fecha de Nacimiento</label>
-                  <span>{formatearFecha(datos.dateOfBirth)}</span>
+                  <span>{formatearFecha(personalInfo.dateOfBirth)}</span>
                 </div>
                 <div className="info-item">
                   <label>Edad</label>
-                  <span>{calcularEdad(datos.dateOfBirth)} años</span>
+                  <span>{calcularEdad(personalInfo.dateOfBirth)} años</span>
+                </div>
+                <div className="info-item">
+                  <label>Sexo</label>
+                  <span>{personalInfo.sex || "N/A"}</span>
                 </div>
                 <div className="info-item">
                   <label>Teléfono</label>
-                  <span>{datos.phoneNumber}</span>
+                  <span>{contactInfo.phoneNumber || "N/A"}</span>
                 </div>
                 <div className="info-item">
+                  <label>Email</label>
+                  <span>{contactInfo.email || "N/A"}</span>
+                </div>
+                <div className="info-item full-width">
+                  <label>Dirección</label>
+                  <span>{contactInfo.address || "N/A"}</span>
+                </div>
+                <div className="info-item full-width">
                   <label>UID del Sistema</label>
-                  <span className="uid-text">{datos.uid}</span>
+                  <span className="uid-text">{paciente.uid || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* --- Tarjeta de Información Médica --- */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3>Información Médica</h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <label>Tipo de Sangre</label>
+                  <span>{medicalInfo.bloodType || "N/A"}</span>
+                </div>
+                <div className="info-item full-width">
+                  <label>Alergias Conocidas</label>
+                  <span>
+                    {medicalInfo.knownAllergies || "Ninguna reportada"}
+                  </span>
+                </div>
+                <div className="info-item full-width">
+                  <label>Enfermedades Crónicas</label>
+                  <span>
+                    {Array.isArray(medicalInfo.chronicDiseases) &&
+                    medicalInfo.chronicDiseases.length > 0
+                      ? medicalInfo.chronicDiseases.join(", ")
+                      : "Ninguna reportada"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* --- Tarjeta de Contacto de Emergencia --- */}
+            <div className="info-card">
+              <div className="card-header">
+                <h3>Contacto de Emergencia</h3>
+              </div>
+              <div className="card-content">
+                <div className="info-item">
+                  <label>Nombre</label>
+                  <span>{emergencyContact.name || "N/A"}</span>
+                </div>
+                <div className="info-item">
+                  <label>Teléfono</label>
+                  <span>{emergencyContact.phoneNumber || "N/A"}</span>
                 </div>
               </div>
             </div>
@@ -161,15 +232,15 @@ const InfoPaciente = ({ solicitud, onClose }) => {
               <div className="card-content">
                 <div className="info-item">
                   <label>Hospital</label>
-                  <span>{datos.hospital}</span>
+                  <span>{cita.hospital}</span>
                 </div>
                 <div className="info-item">
                   <label>Especialidad Requerida</label>
-                  <span>{datos.specialty}</span>
+                  <span>{cita.specialty}</span>
                 </div>
                 <div className="info-item full-width">
                   <label>Motivo de Consulta</label>
-                  <span>{datos.reason}</span>
+                  <span>{cita.reason}</span>
                 </div>
               </div>
             </div>
@@ -188,9 +259,9 @@ const InfoPaciente = ({ solicitud, onClose }) => {
                     <div className="document-icon">🆔</div>
                     <div className="document-info">
                       <label>Frente de Identificación</label>
-                      {datos.verificationUrls?.idFrontUrl ? (
+                      {cita.verificationUrls?.idFrontUrl ? (
                         <a
-                          href={datos.verificationUrls.idFrontUrl}
+                          href={cita.verificationUrls.idFrontUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="document-link"
@@ -206,9 +277,9 @@ const InfoPaciente = ({ solicitud, onClose }) => {
                     <div className="document-icon">🆔</div>
                     <div className="document-info">
                       <label>Reverso de Identificación</label>
-                      {datos.verificationUrls?.idBackUrl ? (
+                      {cita.verificationUrls?.idBackUrl ? (
                         <a
-                          href={datos.verificationUrls.idBackUrl}
+                          href={cita.verificationUrls.idBackUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="document-link"
@@ -237,10 +308,10 @@ const InfoPaciente = ({ solicitud, onClose }) => {
                   <div className="appointment-item pending">
                     <div className="appointment-date">
                       <span className="date">
-                        {formatearFecha(datos.requestTimestamp)}
+                        {formatearFecha(cita.requestTimestamp)}
                       </span>
                       <span className="time">
-                        {datos.requestTimestamp
+                        {cita.requestTimestamp
                           ?.toDate()
                           .toLocaleTimeString([], {
                             hour: "2-digit",
@@ -250,7 +321,7 @@ const InfoPaciente = ({ solicitud, onClose }) => {
                     </div>
                     <div className="appointment-details">
                       <span className="doctor">Solicitud Actual</span>
-                      <span className="specialty">{datos.specialty}</span>
+                      <span className="specialty">{cita.specialty}</span>
                       <span className="status pending">
                         Pendiente de Aprobación
                       </span>
