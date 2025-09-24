@@ -109,7 +109,14 @@ function App() {
                   <Administracion />
                 </ProtectedRoute>
               }
-            />
+            >
+              {/* Rutas hijas */}
+              <Route path="crear-doctor" element={<Administracion />} />
+              <Route path="crear-monitor" element={<Administracion />} />
+              <Route path="crear-administrador" element={<Administracion />} />
+              <Route path="consultorios" element={<Administracion />} />
+              <Route path="reportes" element={<Administracion />} />
+            </Route>
 
             {/* Ruta para cualquier otra URL no encontrada */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -58,7 +58,7 @@ function CreateUserDoctorTool() {
           email,
           password,
           telefonoDeContacto: phone,
-          cedulaProfesional: cedula,
+          cedula: cedula,
           especialidad,
           isActive: isActive, // <--- CAMPO AÑADIDO
           assignedOfficeId: null, // <--- CAMPO AÑADIDO E INICIALIZADO EN NULL
@@ -160,7 +160,7 @@ function CreateUserDoctorTool() {
           <h3>Información Profesional</h3>
           <div className="form-row">
             <div className="input-group">
-              <label htmlFor="cedula">Cédula Profesional *</label>
+              <label htmlFor="cedula">Cédula *</label>
               <input
                 id="cedula"
                 type="text"
