@@ -59,7 +59,9 @@ const HorarioMedico = ({
       if (schedule.start && schedule.end) {
         return [
           {
-            title: schedule.title || "Reservado",
+            title: schedule.isAvailable
+              ? "Disponible"
+              : schedule.reason || "Reservado",
             start: schedule.start,
             end: schedule.end,
             resource: schedule,
@@ -162,34 +164,63 @@ const HorarioMedico = ({
 
   const handleSaveSchedule = useCallback(
     (dataFromModal) => {
+      // --- Lógica para Actualizar ---
       if (dataFromModal.id) {
-        // Lógica para actualizar (probablemente ya funciona bien)
         onUpdateSchedule(dataFromModal);
-      } else {
-        // Lógica para CREAR un nuevo horario
-        // Verificamos si es un horario recurrente (si tiene el arreglo 'days')
-        if (dataFromModal.days && dataFromModal.days.length > 0) {
-          // Es un HORARIO RECURRENTE.
-          // Creamos un objeto con startTime, endTime y el arreglo de días.
-          const recurringSchedule = {
-            startTime: dataFromModal.startTime,
-            endTime: dataFromModal.endTime,
-            days: dataFromModal.days,
-            isAvailable: dataFromModal.isAvailable,
-            reason: dataFromModal.reason || "",
-          };
-          onAddSchedule(recurringSchedule);
-        } else {
-          // Es un EVENTO ÚNICO.
-          // Usamos la fecha y hora del casillero seleccionado en el calendario.
-          const singleEvent = {
-            ...dataFromModal,
-            start: modalState.start,
-            end: modalState.end,
-          };
-          onAddSchedule(singleEvent);
-        }
+        handleCloseModal();
+        return;
       }
+
+      // --- Lógica para CREAR ---
+      if (dataFromModal.days && dataFromModal.days.length > 0) {
+        // CASO 1: Creando horarios recurrentes
+        const [startHour, startMinute] = dataFromModal.startTime
+          .split(":")
+          .map(Number);
+        const [endHour, endMinute] = dataFromModal.endTime
+          .split(":")
+          .map(Number);
+        const referenceDate = moment(modalState.start);
+
+        dataFromModal.days.forEach((day) => {
+          const dayIndex = momentDaysOfWeek.indexOf(day);
+          if (dayIndex === -1) return;
+
+          const targetDate = referenceDate.clone().isoWeekday(dayIndex + 1);
+          const newStart = targetDate
+            .clone()
+            .hour(startHour)
+            .minute(startMinute)
+            .second(0)
+            .toDate();
+          const newEnd = targetDate
+            .clone()
+            .hour(endHour)
+            .minute(endMinute)
+            .second(0)
+            .toDate();
+
+          const newSchedule = {
+            start: newStart,
+            end: newEnd,
+            reason: dataFromModal.reason || "",
+            // 👇 LÍNEA CLAVE 👇
+            isAvailable: dataFromModal.isAvailable,
+          };
+          onAddSchedule(newSchedule);
+        });
+      } else {
+        // CASO 2: Creando un evento único
+        const singleEvent = {
+          start: modalState.start,
+          end: modalState.end,
+          reason: dataFromModal.reason || "",
+          // 👇 LÍNEA CLAVE 👇
+          isAvailable: dataFromModal.isAvailable,
+        };
+        onAddSchedule(singleEvent);
+      }
+
       handleCloseModal();
     },
     [modalState, onUpdateSchedule, onAddSchedule, handleCloseModal]

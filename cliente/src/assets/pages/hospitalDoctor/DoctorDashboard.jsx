@@ -8,10 +8,22 @@ import {
 } from "react-icons/fa";
 import "./DoctorDashboard.css";
 import { useAuth } from "../../context/AuthContext";
+// IMPORTS DE FIREBASE
+import { db } from "../../../firebase"; // Ajusta la ruta a tu config de Firebase
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  Timestamp,
+} from "firebase/firestore";
+import moment from "moment"; // Necesitarás moment para formatear la fecha
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [loading, setLoading] = useState(true); // Estado para la carga
   const [stats, setStats] = useState({
     totalPatients: 247,
     todayAppointments: 12,
@@ -20,37 +32,72 @@ const DoctorDashboard = () => {
   });
 
   useEffect(() => {
-    setUpcomingAppointments([
-      {
-        id: 1,
-        patient: "María González",
-        time: "09:30 AM",
-        type: "Consulta general",
-        status: "confirmado",
-      },
-      {
-        id: 2,
-        patient: "Carlos Rodríguez",
-        time: "10:15 AM",
-        type: "Seguimiento",
-        status: "confirmado",
-      },
-      {
-        id: 3,
-        patient: "Ana Martínez",
-        time: "11:00 AM",
-        type: "Revisión",
-        status: "pendiente",
-      },
-      {
-        id: 4,
-        patient: "Javier López",
-        time: "02:30 PM",
-        type: "Consulta urgente",
-        status: "confirmado",
-      },
-    ]);
-  }, []);
+    if (!user) return; // Si no hay usuario, no hacer nada
+
+    const fetchDoctorData = async () => {
+      setLoading(true);
+      try {
+        // 1. OBTENER LA ASIGNACIÓN DEL DOCTOR
+        // Asumo que la colección de doctores/admins se llama 'usuarios_admin'
+        const adminUsersRef = collection(db, "usuarios_hospitales");
+        const userQuery = query(adminUsersRef, where("uid", "==", user.uid));
+        const userSnapshot = await getDocs(userQuery);
+
+        if (userSnapshot.empty) {
+          console.log("No se encontró el documento del doctor.");
+          setLoading(false);
+          return;
+        }
+
+        const doctorData = userSnapshot.docs[0].data();
+        const { hospitalId, assignedOfficeId } = doctorData;
+
+        if (!hospitalId || !assignedOfficeId) {
+          console.log("El doctor no tiene un consultorio asignado.");
+          setLoading(false);
+          return;
+        }
+
+        // 2. CONSTRUIR LA CONSULTA PARA LOS APPOINTMENTS
+        const todayStart = Timestamp.fromDate(moment().startOf("day").toDate());
+        const appointmentsRef = collection(
+          db,
+          "hospitals",
+          hospitalId,
+          "dr_office",
+          assignedOfficeId,
+          "appointments"
+        );
+        const q = query(
+          appointmentsRef,
+          where("appointmentDate", ">=", todayStart), // Citas desde el inicio de hoy
+          orderBy("appointmentDate", "asc") // Ordenadas por fecha
+        );
+
+        // 3. OBTENER Y PROCESAR LOS DATOS
+        const querySnapshot = await getDocs(q);
+        const appointmentsList = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            patient: data.patientFullName,
+            // Formateamos el Timestamp a una hora legible
+            time: moment(data.appointmentDate.toDate()).format("hh:mm A"),
+            type: data.reason || "Consulta", // Usamos el motivo como tipo
+            status: data.status,
+          };
+        });
+
+        setUpcomingAppointments(appointmentsList);
+      } catch (error) {
+        console.error("Error al obtener las citas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctorData();
+  }, [user]); // El efecto se ejecuta cuando el usuario esté disponible
 
   const StatCard = ({ icon, title, value, subtitle, color }) => (
     <div className="doctor-stat-card">
@@ -76,14 +123,14 @@ const DoctorDashboard = () => {
         <p>{appointment.type}</p>
       </div>
       <div className={`doctor-appointment-status ${appointment.status}`}>
-        {appointment.status === "confirmado" ? "Confirmado" : "Pendiente"}
+        {appointment.status === "confirmada" ? "Confirmado" : "Pendiente"}
       </div>
     </div>
   );
 
   return (
     <main className="doctor-dash-content">
-      {/* Encabezado de bienvenida */}
+      {/* Encabezado de bienvenida (sin cambios) */}
 
       <section className="doctor-stats-grid">
         <StatCard
@@ -121,10 +168,19 @@ const DoctorDashboard = () => {
           <h2>Próximas Citas</h2>
           <button className="doctor-view-all-btn">Ver todas</button>
         </div>
+        {/* --- ÁREA DE CAMBIOS --- */}
         <div className="doctor-appointments-list">
-          {upcomingAppointments.map((appointment) => (
-            <AppointmentCard key={appointment.id} appointment={appointment} />
-          ))}
+          {loading ? (
+            <p>Cargando citas...</p>
+          ) : upcomingAppointments.length === 0 ? (
+            <p className="doctor-no-appointments">
+              No hay citas próximas para hoy.
+            </p>
+          ) : (
+            upcomingAppointments.map((appointment) => (
+              <AppointmentCard key={appointment.id} appointment={appointment} />
+            ))
+          )}
         </div>
       </section>
 

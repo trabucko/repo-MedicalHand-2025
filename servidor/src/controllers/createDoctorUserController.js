@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 
 export const createDoctor = async (req, res) => {
   try {
+    // ✅ 1. RECIBIMOS LOS NUEVOS CAMPOS DEL FRONTEND
     const {
       email,
       password,
@@ -11,10 +12,12 @@ export const createDoctor = async (req, res) => {
       cedulaProfesional,
       especialidad,
       telefonoDeContacto,
+      isActive, // <--- CAMPO RECIBIDO
+      assignedOfficeId, // <--- CAMPO RECIBIDO (vendrá como null)
     } = req.body;
+
     const authUser = req.user;
 
-    // Validación de rol: solo un administrador de hospital puede crear un doctor.
     if (authUser.role !== "hospital_administrador") {
       return res
         .status(403)
@@ -23,21 +26,18 @@ export const createDoctor = async (req, res) => {
 
     const hospitalId = authUser.hospitalId;
 
-    // Crear usuario en Firebase Authentication usando authAdmin.
     const userRecord = await authAdmin.createUser({ email, password });
 
-    // Asignar claims personalizados usando authAdmin.
     await authAdmin.setCustomUserClaims(userRecord.uid, {
       role: "hospital_doctor",
       hospitalId,
     });
 
-    // Crear el nombre completo del doctor.
     const fullName = lastName ? `${firstName} ${lastName}` : firstName || "";
 
-    // Guardar los datos del doctor en Firestore usando db.
-    // El 'userRecord.uid' se usa como el ID del documento ('doctorId').
+    // ✅ 2. AÑADIMOS EL 'uid' Y LOS OTROS CAMPOS AL DOCUMENTO
     await db.collection("usuarios_hospitales").doc(userRecord.uid).set({
+      uid: userRecord.uid, // <--- ¡LA CLAVE! AÑADIR EL UID COMO CAMPO
       email,
       role: "hospital_doctor",
       hospitalId,
@@ -47,24 +47,19 @@ export const createDoctor = async (req, res) => {
       cedulaProfesional,
       especialidad,
       telefonoDeContacto,
-      consultorioActual: null,
-      horariosDisponibles: null,
-      isActive: true, // Añadido por consistencia con tu script de monitor
+      assignedOfficeId: assignedOfficeId, // Guardamos el null que viene del frontend
+      horariosDisponibles: null, // Este campo parece que ya no lo usas, podrías quitarlo
+      isActive: isActive, // Usamos el valor que viene del frontend
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Envía una respuesta de éxito con los datos del nuevo doctor.
     return res.status(201).json({
       message: "Usuario hospital_doctor creado con éxito",
       doctorId: userRecord.uid,
       email,
-      fullName,
-      cedulaProfesional,
-      especialidad,
     });
   } catch (error) {
     console.error("Error creando usuario hospital_doctor:", error);
-    // Manejo de errores, por ejemplo, si el email ya existe.
     if (error.code === "auth/email-already-exists") {
       return res
         .status(409)

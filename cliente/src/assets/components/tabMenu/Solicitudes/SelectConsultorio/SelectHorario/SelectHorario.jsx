@@ -1,4 +1,4 @@
-// src/components/SelectHorario.jsx
+// src/assets/components/tabMenu/Solicitudes/SelectConsultorio/SelectHorario/SelectHorario.jsx
 
 import React, { useState, useEffect } from "react";
 import {
@@ -6,7 +6,6 @@ import {
   FaUserMd,
   FaHospital,
   FaCalendarAlt,
-  FaInfoCircle,
   FaClock,
   FaMapMarkerAlt,
 } from "react-icons/fa";
@@ -24,18 +23,18 @@ import {
   doc,
   updateDoc,
   Timestamp,
+  addDoc,
 } from "firebase/firestore";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
 
-// ✅ 1. Se añade un valor por defecto al prop para evitar que sea 'undefined'
 const SelectHorario = ({
   consultorio,
   doctor,
   onBack,
   onConfirm,
-  appointmentRequest = {}, // Valor por defecto es un objeto vacío
+  appointmentRequest = {},
 }) => {
   const [eventsList, setEventsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,14 +56,13 @@ const SelectHorario = ({
     date: "Fecha",
     time: "Hora",
     event: "Evento",
-    noEventsInRange: "Sin eventos",
+    noEventsInRange: "No hay horarios disponibles en este rango.",
   };
 
   useEffect(() => {
     if (!consultorio || !consultorio.id) return;
+
     const fetchSchedule = async () => {
-      console.log("consultorio recibido en SelectHorario:", consultorio);
-      console.log("consultorio.id:", consultorio?.id);
       setLoading(true);
       const generatedEvents = [];
       try {
@@ -79,12 +77,14 @@ const SelectHorario = ({
         const querySnapshot = await getDocs(scheduleRef);
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          // Simplificado para leer solo eventos con fecha de inicio y fin
           if (data.start && data.end) {
             if (
               moment(data.start.toDate()).isAfter(moment()) &&
               data.isAvailable
             ) {
               generatedEvents.push({
+                id: doc.id, // ID del horario para la actualización
                 title: "Espacio Disponible",
                 start: data.start.toDate(),
                 end: data.end.toDate(),
@@ -93,57 +93,12 @@ const SelectHorario = ({
               });
             } else if (!data.isAvailable) {
               generatedEvents.push({
+                id: doc.id,
                 title: "Reservado",
                 start: data.start.toDate(),
                 end: data.end.toDate(),
                 isBookable: false,
                 isBooked: true,
-              });
-            }
-          } else if (data.days && data.startTime && data.endTime) {
-            const momentDaysOfWeek = [
-              "Lunes",
-              "Martes",
-              "Miércoles",
-              "Jueves",
-              "Viernes",
-              "Sábado",
-              "Domingo",
-            ];
-            const [startHour, startMinute] = data.startTime
-              .split(":")
-              .map(Number);
-            const [endHour, endMinute] = data.endTime.split(":").map(Number);
-            for (let i = 0; i < 8; i++) {
-              data.days.forEach((day) => {
-                const dayIndex = momentDaysOfWeek.indexOf(day);
-                if (dayIndex === -1) return;
-                const dayDate = moment()
-                  .add(i, "weeks")
-                  .isoWeekday(dayIndex + 1);
-                if (dayDate.isSameOrAfter(moment(), "day")) {
-                  const startDate = dayDate
-                    .clone()
-                    .hour(startHour)
-                    .minute(startMinute)
-                    .second(0)
-                    .toDate();
-                  const endDate = dayDate
-                    .clone()
-                    .hour(endHour)
-                    .minute(endMinute)
-                    .second(0)
-                    .toDate();
-                  generatedEvents.push({
-                    title: data.isAvailable
-                      ? "Espacio Disponible"
-                      : "Reservado",
-                    start: startDate,
-                    end: endDate,
-                    isBookable: data.isAvailable,
-                    isBooked: !data.isAvailable,
-                  });
-                }
               });
             }
           }
@@ -168,23 +123,22 @@ const SelectHorario = ({
   };
 
   const handleOpenModal = () => {
-    // ✅ 2. Se añade una comprobación para asegurar que 'appointmentRequest' tiene datos
     if (!appointmentRequest || !appointmentRequest.id) {
       alert(
         "Error: No se ha proporcionado una solicitud de cita válida para agendar."
       );
       return;
     }
-
     if (selectedEvent) {
       const formattedDate = moment(selectedEvent.start).format("DD/MM/YYYY");
       const formattedTime = moment(selectedEvent.start).format("HH:mm");
       const citaData = {
+        // Ya no necesitamos pasar el ID de la cita original aquí,
+        // porque la lógica de handleConfirmCita ya lo tiene de `appointmentRequest`.
         consultorio,
         doctor,
         fecha: formattedDate,
         hora: formattedTime,
-        // Se usa optional chaining (?.) para máxima seguridad
         patient: {
           fullName: appointmentRequest?.fullName || "Paciente no especificado",
           reason: appointmentRequest?.reason || "Sin especificar",
@@ -200,36 +154,77 @@ const SelectHorario = ({
 
   const handleCloseModal = () => setShowModal(false);
 
-  // Dentro de SelectHorario
+  // --- FUNCIÓN DE CONFIRMACIÓN COMPLETAMENTE REFACTORIZADA ---
   const handleConfirmCita = async () => {
-    if (!citaConfirmadaData?.id) {
-      alert("No se encontró el ID de la cita a confirmar.");
+    if (!appointmentRequest || !appointmentRequest.id) {
+      alert("No se encontró la solicitud de cita original para procesar.");
+      return;
+    }
+    if (!selectedEvent || !selectedEvent.id) {
+      alert("Error: No se ha seleccionado un horario válido del calendario.");
       return;
     }
 
     try {
-      const citaRef = doc(db, "citas", citaConfirmadaData.id); // colección 'citas'
-
+      // 1. CONSTRUIR LOS DATOS DEL NUEVO APPOINTMENT
       const fechaHora = moment(
         `${citaConfirmadaData.fecha} ${citaConfirmadaData.hora}`,
         "DD/MM/YYYY HH:mm"
       ).toDate();
 
-      const dataToUpdate = {
-        assignedDate: Timestamp.fromDate(fechaHora), // Fecha y hora
-        assignedDoctor: citaConfirmadaData.doctor.nombre, // Nombre del doctor
-        clinicOffice: citaConfirmadaData.consultorio.name, // Nombre del consultorio
-        status: "confirmada", // Cambiar de 'pendiente' a 'confirmada'
+      const newAppointmentData = {
+        patientUid: appointmentRequest.uid,
+        patientFullName: appointmentRequest.fullName,
+        reason: appointmentRequest.reason,
+        specialty: appointmentRequest.specialty,
+        status: "confirmada",
+        assignedDoctor: doctor.nombre,
+        clinicOffice: consultorio.name,
+        appointmentDate: Timestamp.fromDate(fechaHora),
+        createdAt: Timestamp.now(),
       };
 
-      await updateDoc(citaRef, dataToUpdate);
+      // 2. CREAR EL DOCUMENTO EN LA COLECCIÓN 'appointments' DEL CONSULTORIO
+      const appointmentsRef = collection(
+        db,
+        "hospitals",
+        "HL_FERNANDO_VP",
+        "dr_office",
+        consultorio.id,
+        "appointments"
+      );
+      const newAppointmentRef = await addDoc(
+        appointmentsRef,
+        newAppointmentData
+      );
 
-      alert("¡Cita confirmada exitosamente!");
+      // 3. ACTUALIZAR EL HORARIO ('schedule') PARA ENLAZARLO Y RESERVARLO
+      const scheduleRef = doc(
+        db,
+        "hospitals",
+        "HL_FERNANDO_VP",
+        "dr_office",
+        consultorio.id,
+        "schedules",
+        selectedEvent.id
+      );
+      await updateDoc(scheduleRef, {
+        isAvailable: false,
+        appointmentId: newAppointmentRef.id,
+      });
+
+      // 4. ACTUALIZAR LA SOLICITUD ORIGINAL A 'confirmada' PARA EL HISTORIAL
+      const originalRequestRef = doc(db, "citas", appointmentRequest.id);
+      await updateDoc(originalRequestRef, {
+        status: "confirmada",
+      });
+
+      alert("¡Cita agendada y horario reservado exitosamente!");
       setShowModal(false);
-      onConfirm(dataToUpdate); // ⚡ Para volver a la pantalla anterior
+      onConfirm();
     } catch (error) {
-      console.error("Error al actualizar la cita:", error);
-      alert("Hubo un error al confirmar la cita, intenta de nuevo.");
+      console.error("Error en el proceso de agendamiento:", error);
+      alert("Hubo un error al agendar la cita. Intenta de nuevo.");
     }
   };
 
@@ -271,12 +266,6 @@ const SelectHorario = ({
               <div className="sh-card-content">
                 <h4>Consultorio</h4>
                 <p className="sh-card-value">{consultorio.name}</p>
-                {consultorio.numero && (
-                  <p className="sh-card-detail">Número: {consultorio.numero}</p>
-                )}
-                {consultorio.piso && (
-                  <p className="sh-card-detail">Piso: {consultorio.piso}</p>
-                )}
               </div>
             </div>
             <div className="sh-info-card sh-highlight">
@@ -310,38 +299,12 @@ const SelectHorario = ({
                 )}
               </div>
             </div>
-            {consultorio.direccion && (
-              <div className="sh-info-card">
-                <div className="sh-card-icon">
-                  <FaMapMarkerAlt className="sh-icon" />
-                </div>
-                <div className="sh-card-content">
-                  <h4>Ubicación</h4>
-                  <p className="sh-card-detail">{consultorio.direccion}</p>
-                </div>
-              </div>
-            )}
           </div>
           <Button
             variant="contained"
             onClick={handleOpenModal}
             disabled={!selectedEvent}
             className="sh-confirm-button"
-            sx={{
-              mt: 2,
-              backgroundColor: "#1976d2",
-              "&:hover": {
-                backgroundColor: "#115293",
-                transform: "translateY(-1px)",
-                boxShadow: "0 4px 12px rgba(25, 118, 210, 0.4)",
-              },
-              transition: "all 0.3s ease",
-              fontSize: "1.1rem",
-              padding: "12px 24px",
-              borderRadius: "10px",
-              fontWeight: "600",
-              textTransform: "none",
-            }}
           >
             {selectedEvent
               ? "Confirmar Cita Seleccionada"

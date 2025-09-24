@@ -60,9 +60,10 @@ function CreateUserDoctorTool() {
           telefonoDeContacto: phone,
           cedulaProfesional: cedula,
           especialidad,
+          isActive: isActive, // <--- CAMPO AÑADIDO
+          assignedOfficeId: null, // <--- CAMPO AÑADIDO E INICIALIZADO EN NULL
         }),
       });
-
       const data = await res.json();
 
       if (res.ok) {
