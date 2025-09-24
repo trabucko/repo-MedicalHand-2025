@@ -1,3 +1,5 @@
+// src/assets/components/tabMenu/Solicitudes/Solicitudes.jsx
+
 import React, { useState, useEffect } from "react";
 import "./Solicitudes.css";
 import { FaUserMd, FaFilter, FaTimes } from "react-icons/fa";
@@ -5,6 +7,7 @@ import { FaUserMd, FaFilter, FaTimes } from "react-icons/fa";
 // IMPORTACIÓN DE COMPONENTES DE VISTA
 import InfoPaciente from "./infoPaciente/infoPaciente";
 import SelectConsultorio from "./selectConsultorio/SelectConsultorio";
+import SelectHorario from "../Solicitudes/SelectConsultorio/SelectHorario/SelectHorario"; // <--- Ruta de importación corregida
 
 // AÑADIDOS DE FIREBASE
 import { db } from "../../../../firebase";
@@ -24,7 +27,8 @@ const Solicitud = () => {
 
   // --- Estados para controlar las vistas ---
   const [showInfoPaciente, setShowInfoPaciente] = useState(false);
-  const [showGestionar, setShowGestionar] = useState(false); // Estado para la nueva vista
+  const [showGestionar, setShowGestionar] = useState(false);
+  const [selectedOffice, setSelectedOffice] = useState(null); // <-- Nuevo estado para el consultorio
 
   // --- Estados para filtros y ordenación ---
   const [showModal, setShowModal] = useState(false);
@@ -79,7 +83,7 @@ const Solicitud = () => {
           motivo: citaData.reason,
           estado: "Pendiente",
           especialidad: citaData.specialty,
-          citaCompleta: citaData,
+          citaCompleta: { ...citaData, id: doc.id }, // ⚡ Aquí metemos el id dentro
           pacienteCompleto: pacienteData,
         };
         console.log("LOG 4: Objeto final que se va a retornar:", objetoFinal);
@@ -112,14 +116,26 @@ const Solicitud = () => {
   // Muestra la vista para gestionar la solicitud (llamada desde InfoPaciente)
   const handleGestionarSolicitud = (solicitud) => {
     setSelectedSolicitud(solicitud);
-    setShowInfoPaciente(false); // Oculta la vista de detalles
-    setShowGestionar(true); // Muestra la vista de gestión
+    setShowInfoPaciente(false);
+    setShowGestionar(true);
+  };
+
+  const handleSelectOffice = (office) => {
+    setSelectedOffice(office);
+    setShowGestionar(false); // <--- Es importante ocultar la vista anterior
   };
 
   // Cierra la vista de gestión y vuelve a la lista
   const handleCloseGestionar = () => {
     setShowGestionar(false);
     setSelectedSolicitud(null);
+    setSelectedOffice(null); // <--- Resetear el consultorio también
+  };
+
+  // Handler para volver a la selección de consultorio
+  const handleBackToConsultorio = () => {
+    setSelectedOffice(null);
+    setShowGestionar(true); // <--- Volver a la vista de gestión (Seleccionar consultorio)
   };
 
   const toggleModal = () => setShowModal(!showModal);
@@ -162,24 +178,39 @@ const Solicitud = () => {
   }
 
   // --- LÓGICA DE RENDERIZADO CONDICIONAL ---
+  if (selectedSolicitud && selectedOffice) {
+    const doctorInfo = {
+      nombre: selectedOffice.consultorio.assignedDoctorName,
+    };
 
-  // Vista para GESTIONAR la solicitud
-  if (showGestionar) {
     return (
-      <SelectConsultorio
-        solicitud={selectedSolicitud}
-        onClose={handleCloseGestionar}
+      <SelectHorario
+        consultorio={selectedOffice.consultorio} // ⚡ Aquí pasamos el objeto correcto
+        doctor={doctorInfo}
+        appointmentRequest={selectedSolicitud.citaCompleta}
+        onBack={handleBackToConsultorio}
+        onConfirm={handleCloseGestionar}
       />
     );
   }
 
-  // Vista para VER DETALLES del paciente
+  if (showGestionar) {
+    // Es el momento de renderizar SelectConsultorio
+    return (
+      <SelectConsultorio
+        onClose={handleCloseGestionar}
+        onSelectOffice={handleSelectOffice}
+        appointmentRequest={selectedSolicitud?.citaCompleta} // 🔥 esta sí existe
+      />
+    );
+  }
+
   if (showInfoPaciente) {
     return (
       <InfoPaciente
         solicitud={selectedSolicitud}
         onClose={handleCloseInfoPaciente}
-        onGestionar={handleGestionarSolicitud} // Se pasa la función para navegar
+        onGestionar={handleGestionarSolicitud}
       />
     );
   }

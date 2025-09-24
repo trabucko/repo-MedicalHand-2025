@@ -53,55 +53,64 @@ const HorarioMedico = ({
   // ✅ ================== INICIO DE LA ACTUALIZACIÓN ================== ✅
   // Esta lógica ahora procesará AMBOS tipos de horarios.
   const calendarEvents = useMemo(() => {
-    const now = moment(); // Base para horarios recurrentes
+    // Esta lógica genera múltiples eventos para cada día de la semana para horarios recurrentes
     return schedules.flatMap((schedule) => {
-      // CASO 1: Es un horario específico con fechas completas (Formato Nuevo)
+      // CASO 1: Horario específico con fecha y hora completas
       if (schedule.start && schedule.end) {
         return [
           {
             title: schedule.title || "Reservado",
-            start: schedule.start, // Ya es un objeto Date
-            end: schedule.end, // Ya es un objeto Date
+            start: schedule.start,
+            end: schedule.end,
             resource: schedule,
           },
         ];
       }
 
-      // CASO 2: Es un horario recurrente (Formato Antiguo)
+      // CASO 2: Horario recurrente (se generan eventos para varias semanas)
       if (schedule.startTime && schedule.endTime && schedule.days) {
-        return schedule.days.map((day) => {
-          const dayIndex = momentDaysOfWeek.indexOf(day);
-          const [startHour, startMinute] = schedule.startTime
-            .split(":")
-            .map(Number);
-          const [endHour, endMinute] = schedule.endTime.split(":").map(Number);
+        const events = [];
+        const [startHour, startMinute] = schedule.startTime
+          .split(":")
+          .map(Number);
+        const [endHour, endMinute] = schedule.endTime.split(":").map(Number);
 
-          const dayDate = now.clone().day(dayIndex + 1);
-          const startDate = dayDate
-            .clone()
-            .hour(startHour)
-            .minute(startMinute)
-            .toDate();
-          const endDate = dayDate
-            .clone()
-            .hour(endHour)
-            .minute(endMinute)
-            .toDate();
+        // Generar eventos para un rango de semanas (ej. 4 semanas atrás y 8 adelante)
+        for (let i = -4; i < 8; i++) {
+          schedule.days.forEach((day) => {
+            const dayIndex = momentDaysOfWeek.indexOf(day);
+            if (dayIndex === -1) return;
 
-          return {
-            title: schedule.isAvailable
-              ? "Disponible"
-              : schedule.reason || "No Disponible",
-            start: startDate,
-            end: endDate,
-            resource: schedule,
-          };
-        });
+            const dayDate = moment()
+              .add(i, "weeks")
+              .isoWeekday(dayIndex + 1);
+
+            const startDate = dayDate
+              .clone()
+              .hour(startHour)
+              .minute(startMinute)
+              .toDate();
+            const endDate = dayDate
+              .clone()
+              .hour(endHour)
+              .minute(endMinute)
+              .toDate();
+
+            events.push({
+              title: schedule.isAvailable
+                ? "Disponible"
+                : schedule.reason || "No Disponible",
+              start: startDate,
+              end: endDate,
+              resource: { ...schedule, day }, // Guardamos el día específico para posible edición
+            });
+          });
+        }
+        return events;
       }
 
-      // Si no es ninguno de los dos, es un dato inválido y se ignora.
       console.warn("Horario ignorado por formato desconocido:", schedule);
-      return []; // Retorna un array vacío para ser filtrado por flatMap
+      return [];
     });
   }, [schedules]);
   // ✅ =================== FIN DE LA ACTUALIZACIÓN =================== ✅
@@ -154,17 +163,32 @@ const HorarioMedico = ({
   const handleSaveSchedule = useCallback(
     (dataFromModal) => {
       if (dataFromModal.id) {
+        // Lógica para actualizar (probablemente ya funciona bien)
         onUpdateSchedule(dataFromModal);
       } else {
-        const finalSchedule = {
-          // Asegúrate que tu modal envíe algo como:
-          // { isAvailable: false, reason: "Cita personal" }
-          // o { isAvailable: true, title: "Espacio extra" }
-          ...dataFromModal,
-          start: modalState.start,
-          end: modalState.end,
-        };
-        onAddSchedule(finalSchedule);
+        // Lógica para CREAR un nuevo horario
+        // Verificamos si es un horario recurrente (si tiene el arreglo 'days')
+        if (dataFromModal.days && dataFromModal.days.length > 0) {
+          // Es un HORARIO RECURRENTE.
+          // Creamos un objeto con startTime, endTime y el arreglo de días.
+          const recurringSchedule = {
+            startTime: dataFromModal.startTime,
+            endTime: dataFromModal.endTime,
+            days: dataFromModal.days,
+            isAvailable: dataFromModal.isAvailable,
+            reason: dataFromModal.reason || "",
+          };
+          onAddSchedule(recurringSchedule);
+        } else {
+          // Es un EVENTO ÚNICO.
+          // Usamos la fecha y hora del casillero seleccionado en el calendario.
+          const singleEvent = {
+            ...dataFromModal,
+            start: modalState.start,
+            end: modalState.end,
+          };
+          onAddSchedule(singleEvent);
+        }
       }
       handleCloseModal();
     },

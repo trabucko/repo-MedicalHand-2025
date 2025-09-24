@@ -24,7 +24,7 @@ const DoctorLayout = () => {
   const [selectedConsultorio, setSelectedConsultorio] = useState(null);
   const [availableConsultorios, setAvailableConsultorios] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isSidebarOpen, setSidebarOpen] = useState(true); // Inicia abierto
+  const [isSidebarOpen, setSidebarOpen] = useState(false); // Inicia abierto
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   // --- Estado nuevo para el perfil del doctor ---

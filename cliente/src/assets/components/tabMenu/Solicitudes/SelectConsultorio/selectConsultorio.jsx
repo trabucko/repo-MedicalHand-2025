@@ -1,87 +1,74 @@
 // src/components/SelectConsultorio.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./selectConsultorio.css";
-import SelectHorario from "./SelectHorario/SelectHorario";
 import { FaArrowLeft, FaHospital } from "react-icons/fa";
+import { db } from "../../../../../firebase"; // Asegúrate de que la ruta a tu configuración de Firebase sea correcta
+import { collection, query, where, getDocs } from "firebase/firestore";
 
 const SelectConsultorio = ({
   onClose,
   onSelectOffice,
   isReprogramming = false,
+  appointmentRequest, // <-- ADD THIS LINE
 }) => {
+  const [consultorios, setConsultorios] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedConsultorio, setSelectedConsultorio] = useState(null);
 
-  const consultorios = [
-    {
-      id: 1,
-      name: "Consultorio 101",
-      estado: "Disponible",
-      medico: "Dr. Juan Pérez",
-    },
-    {
-      id: 2,
-      name: "Consultorio 102",
-      estado: "No disponible",
-      medico: "Dr. López",
-    },
-    {
-      id: 3,
-      name: "Consultorio 103",
-      estado: "Disponible",
-      medico: "Dra. Ana García",
-    },
-    {
-      id: 4,
-      name: "Consultorio 104",
-      estado: "No disponible",
-      medico: "Dra. García",
-    },
-    {
-      id: 5,
-      name: "Consultorio 105",
-      estado: "Disponible",
-      medico: "Dr. Carlos Rodríguez",
-    },
-    {
-      id: 6,
-      name: "Consultorio 106",
-      estado: "No disponible",
-      medico: "Dr. Pérez",
-    },
-  ];
+  useEffect(() => {
+    const fetchConsultorios = async () => {
+      try {
+        const consultoriosRef = collection(
+          db,
+          "hospitals",
+          "HL_FERNANDO_VP",
+          "dr_office"
+        );
+        const q = query(consultoriosRef, where("status", "==", "ocupado"));
+        const querySnapshot = await getDocs(q);
+
+        const consultoriosList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setConsultorios(consultoriosList);
+      } catch (error) {
+        console.error("Error al obtener los consultorios:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConsultorios();
+  }, []);
 
   const handleSelectConsultorio = (cons) => {
-    if (cons.estado === "Disponible") {
-      if (isReprogramming) {
-        onSelectOffice(cons); // Llama a la función del padre para la reprogramación
-      } else {
-        setSelectedConsultorio(cons); // Establece el estado local para el flujo original
-      }
+    if (!appointmentRequest) {
+      console.error("No se recibió appointmentRequest en SelectConsultorio");
+      return;
     }
+
+    onSelectOffice({
+      consultorio: cons,
+      appointment: appointmentRequest, // 🔥 mandamos ambos
+    });
   };
 
-  const handleBackToConsultorios = () => {
-    setSelectedConsultorio(null);
-  };
-
-  const handleConfirmAppointment = (appointmentDetails) => {
-    console.log("Cita confirmada:", appointmentDetails);
-    setSelectedConsultorio(null);
-  };
-
-  // Lógica para renderizar SelectHorario solo si no estamos en modo reprogramación
-  if (selectedConsultorio && !isReprogramming) {
-    const doctorInfo = {
-      nombre: selectedConsultorio.medico,
-    };
+  if (loading) {
     return (
-      <SelectHorario
-        consultorio={selectedConsultorio}
-        doctor={doctorInfo}
-        onBack={handleBackToConsultorios}
-        onConfirm={handleConfirmAppointment}
-      />
+      <div className="consultorio-container">
+        <div className="consultorio-header">
+          <div onClick={onClose} className="back-link">
+            <FaArrowLeft className="back-icon" />
+            <span>Volver</span>
+          </div>
+          <div className="consultorio-title">
+            <h2>Cargando Consultorios...</h2>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -101,27 +88,26 @@ const SelectConsultorio = ({
           {consultorios.map((cons) => (
             <li
               key={cons.id}
-              className={`consultorio-list-item ${
-                cons.estado === "Disponible" ? "available" : "unavailable"
-              }`}
+              className="consultorio-list-item available"
               onClick={() => handleSelectConsultorio(cons)}
             >
               <div className="consultorio-icon-wrapper">
                 <FaHospital />
               </div>
               <div className="consultorio-details">
+                {/* *** CAMBIO 2: Mostrar el nombre del consultorio desde el campo 'name' *** */}
                 <div className="consultorio-number">{cons.name}</div>
+                {/* *** CAMBIO 3: Mostrar solo el nombre del doctor asignado *** */}
                 <div className="consultorio-status">
-                  {cons.estado}
-                  {cons.medico && (
-                    <p className="medico-asignado">({cons.medico})</p>
+                  {cons.assignedDoctorName ? (
+                    <p className="medico-asignado">{cons.assignedDoctorName}</p>
+                  ) : (
+                    <p className="medico-asignado">Sin doctor asignado</p>
                   )}
                 </div>
               </div>
               <div className="consultorio-action">
-                {cons.estado === "Disponible" && (
-                  <button className="select-button">Seleccionar</button>
-                )}
+                <button className="select-button">Seleccionar</button>
               </div>
             </li>
           ))}

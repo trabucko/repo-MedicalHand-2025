@@ -58,17 +58,50 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
         return;
       }
 
-      if (
-        !(scheduleData.start instanceof Date) ||
-        !(scheduleData.end instanceof Date)
+      let dataToSave; // Objeto que se guardará en Firestore
+
+      // CASO 1: Es un HORARIO RECURRENTE (tiene 'days')
+      if (scheduleData.days && scheduleData.days.length > 0) {
+        console.log("Guardando horario recurrente...");
+        dataToSave = {
+          startTime: scheduleData.startTime,
+          endTime: scheduleData.endTime,
+          days: scheduleData.days,
+          isAvailable: scheduleData.isAvailable,
+          reason: scheduleData.reason || "",
+          createdAt: serverTimestamp(),
+          doctorId: user.uid,
+        };
+      }
+      // CASO 2: Es un EVENTO ÚNICO (tiene 'start' y 'end')
+      else if (
+        scheduleData.start instanceof Date &&
+        scheduleData.end instanceof Date
       ) {
+        console.log("Guardando evento único...");
+        const isAvailable = scheduleData.isAvailable !== false;
+        dataToSave = {
+          title:
+            scheduleData.title ||
+            (isAvailable ? "Horario Disponible" : "No Disponible"),
+          start: scheduleData.start,
+          end: scheduleData.end,
+          isAvailable: isAvailable,
+          reason: scheduleData.reason || "",
+          createdAt: serverTimestamp(),
+          doctorId: user.uid,
+        };
+      }
+      // CASO 3: Los datos no son válidos
+      else {
         console.error(
-          "Error de Datos: El evento no tiene fechas de inicio o fin válidas.",
+          "Error de Datos: El objeto de horario no es válido.",
           scheduleData
         );
-        return;
+        return; // Detenemos la ejecución
       }
 
+      // Referencia a la colección en Firestore
       const schedulesRef = collection(
         db,
         "hospitals",
@@ -79,36 +112,6 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
       );
 
       try {
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // 1. Obtenemos el nombre del día de la semana a partir de la fecha de inicio.
-        const isAvailable = scheduleData.isAvailable !== false;
-
-        const dayNames = [
-          "Domingo",
-          "Lunes",
-          "Martes",
-          "Miércoles",
-          "Jueves",
-          "Viernes",
-          "Sábado",
-        ];
-        const dayOfWeek = dayNames[scheduleData.start.getDay()];
-
-        // 2. Creamos el objeto que se guardará en Firestore.
-        //    Ahora `start` y `end` son las fechas completas que nos da el calendario.
-        const dataToSave = {
-          title:
-            scheduleData.title ||
-            (isAvailable ? "Horario Disponible" : "No Disponible"),
-          start: scheduleData.start,
-          end: scheduleData.end,
-          isAvailable: isAvailable,
-          reason: scheduleData.reason || "", // Aseguramos que el campo reason exista
-          createdAt: serverTimestamp(),
-          doctorId: user.uid,
-        };
-        // --- FIN DE LA MODIFICACIÓN ---
-
         await addDoc(schedulesRef, dataToSave);
         console.log("Horario añadido con éxito", dataToSave);
       } catch (error) {

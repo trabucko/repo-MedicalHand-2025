@@ -15,13 +15,14 @@
   box-sizing: border-box;
 }
 
-.titulo {
+.ti {
   display: flex;
   justify-content: start;
 }
 
 .header-left {
   display: flex;
+
   align-items: center;
   gap: 1rem;
 }
