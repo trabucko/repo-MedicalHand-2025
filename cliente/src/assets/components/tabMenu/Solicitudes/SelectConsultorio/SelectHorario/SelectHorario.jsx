@@ -215,9 +215,13 @@ const SelectHorario = ({
 
       // 4. ACTUALIZAR LA SOLICITUD ORIGINAL A 'confirmada' PARA EL HISTORIAL
       const originalRequestRef = doc(db, "citas", appointmentRequest.id);
-      await updateDoc(originalRequestRef, {
+      const dataToUpdate = {
         status: "confirmada",
-      });
+        assignedDate: Timestamp.fromDate(fechaHora), // ✅ Añadir la fecha
+        assignedDoctor: doctor.nombre, // ✅ Añadir el doctor
+        clinicOffice: consultorio.name, // ✅ Añadir el consultorio
+      };
+      await updateDoc(originalRequestRef, dataToUpdate);
 
       alert("¡Cita agendada y horario reservado exitosamente!");
       setShowModal(false);
