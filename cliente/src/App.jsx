@@ -6,26 +6,29 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "../src/assets/context/AuthContext.jsx";
+
+// --- Contextos ---
+import { AuthProvider, useAuth } from "./assets/context/AuthContext.jsx";
 import {
   LoadingProvider,
   useLoading,
-} from "../src/assets/context/LoadingContext.jsx";
+} from "./assets/context/LoadingContext.jsx";
 
-// --- Importaciones de Componentes y Páginas ---
-import Login from "../src/assets/pages/Login/Login.jsx";
+// --- Componentes y Páginas ---
+import Login from "./assets/pages/Login/Login.jsx";
 import Administracion from "./assets/pages/Administracion/Administracion.jsx";
 import ConsultaExterna from "./assets/pages/ConsultaExterna/ConsultaExterna.jsx";
 import DoctorDashboard from "./assets/pages/hospitalDoctor/DoctorDashboard.jsx";
 import DoctorView from "./assets/components/components_Doctor/HorarioMedico/DoctorView.jsx";
-import GlobalLoader from "../src/assets/components/GlobalLoader/GlobalLoader.jsx";
-import DoctorLayout from "./assets/components/components_Doctor/Doctor_Layout/Doctor_Layout.jsx"; // <-- ¡NUEVA IMPORTACIÓN CLAVE!
+import GlobalLoader from "./assets/components/GlobalLoader/GlobalLoader.jsx";
+import DoctorLayout from "./assets/components/components_Doctor/Doctor_Layout/Doctor_Layout.jsx";
+import Paciente from "./assets/components/components_Doctor/paciente/pacientes.jsx";
 
-// --- Componentes de Rutas (sin cambios) ---
+// --- Componentes de Control de Rutas ---
 
 const GuestRoute = () => {
   const { user, loading } = useAuth();
-  if (loading) return null;
+  if (loading) return null; // Espera a que se determine el estado de autenticación
 
   if (user) {
     const role = user.claims?.role;
@@ -35,8 +38,11 @@ const GuestRoute = () => {
       return <Navigate to="/dashboard-doctor" replace />;
     if (role === "hospital_administrador")
       return <Navigate to="/administracion" replace />;
+
+    // Si el usuario tiene un rol no reconocido, lo enviamos al login por seguridad
     return <Navigate to="/login" replace />;
   }
+  // Si no hay usuario, permite el acceso a las rutas hijas (Login)
   return <Outlet />;
 };
 
@@ -44,17 +50,20 @@ const ProtectedRoute = ({ requiredRole, children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return null;
+    return null; // Muestra nada mientras se verifica el usuario
   }
 
+  // Si no hay usuario, redirige al login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
+  // Si el rol del usuario no coincide con el requerido, redirige al login
   if (requiredRole && user.claims?.role !== requiredRole) {
     return <Navigate to="/login" replace />;
   }
 
+  // Si todo está correcto, renderiza el componente hijo
   return children;
 };
 
@@ -63,7 +72,7 @@ const AppLoader = () => {
   return isLoading ? <GlobalLoader /> : null;
 };
 
-// --- Componente Principal App (REESTRUCTURADO) ---
+// --- Componente Principal de la Aplicación ---
 
 function App() {
   return (
@@ -72,7 +81,7 @@ function App() {
         <Router>
           <AppLoader />
           <Routes>
-            {/* --- RUTAS PARA INVITADOS (Login y raíz) --- */}
+            {/* --- RUTAS PÚBLICAS (Solo para usuarios no autenticados) --- */}
             <Route element={<GuestRoute />}>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Login />} />
@@ -87,10 +96,11 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Las páginas hijas se renderizan DENTRO del DoctorLayout */}
+              {/* Estas páginas se renderizan dentro del DoctorLayout */}
               <Route index element={<DoctorDashboard />} />
               <Route path="horario" element={<DoctorView />} />
-              {/* Agrega aquí otras rutas del doctor, ej: <Route path="pacientes" element={<PatientsPage />} /> */}
+              <Route path="paciente/:patientId" element={<Paciente />} />
+              {/* Puedes agregar más rutas específicas para el doctor aquí */}
             </Route>
 
             {/* --- RUTAS PROTEGIDAS PARA OTROS ROLES --- */}
@@ -110,7 +120,7 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Rutas hijas */}
+              {/* Rutas hijas de Administración */}
               <Route path="crear-doctor" element={<Administracion />} />
               <Route path="crear-monitor" element={<Administracion />} />
               <Route path="crear-administrador" element={<Administracion />} />
@@ -118,7 +128,7 @@ function App() {
               <Route path="reportes" element={<Administracion />} />
             </Route>
 
-            {/* Ruta para cualquier otra URL no encontrada */}
+            {/* --- RUTA COMODÍN (Redirige cualquier URL no encontrada) --- */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
@@ -126,4 +136,5 @@ function App() {
     </LoadingProvider>
   );
 }
+
 export default App;

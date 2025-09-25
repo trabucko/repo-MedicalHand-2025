@@ -31,14 +31,14 @@ const DoctorLayout = () => {
   const [doctorProfile, setDoctorProfile] = useState(null); // <-- AÑADIDO
 
   useEffect(() => {
-    if (!user) {
+    if (!user?.uid) {
+      // Verificamos que user.uid exista
       setLoading(false);
       return;
     }
 
-    // --- AÑADIDO: Lógica para obtener el perfil del doctor ---
     const fetchDoctorProfile = async () => {
-      const docRef = doc(db, "users", user.uid);
+      const docRef = doc(db, "usuarios_hospitales", user.uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         setDoctorProfile(docSnap.data());
@@ -46,9 +46,9 @@ const DoctorLayout = () => {
         console.error("No se encontró el perfil del doctor.");
       }
     };
+
     fetchDoctorProfile();
 
-    // --- Lógica original para los consultorios (se conserva intacta) ---
     if (user.claims?.hospitalId) {
       const consultoriosRef = collection(
         db,
@@ -77,7 +77,8 @@ const DoctorLayout = () => {
     } else {
       setLoading(false);
     }
-  }, [user]);
+    // ✅ LA CORRECCIÓN CLAVE: Depender de user.uid en lugar del objeto user completo.
+  }, [user?.uid]);
 
   // --- AÑADIDO: Función de Logout ---
   const handleLogout = async () => {

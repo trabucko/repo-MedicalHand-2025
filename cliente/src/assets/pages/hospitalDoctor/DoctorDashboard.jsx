@@ -1,3 +1,5 @@
+// src/assets/pages/hospitalDoctor/DoctorDashboard.jsx
+
 import React, { useState, useEffect } from "react";
 import {
   FaCalendarAlt,
@@ -8,7 +10,7 @@ import {
 } from "react-icons/fa";
 import "./DoctorDashboard.css";
 import { useAuth } from "../../context/AuthContext";
-// IMPORTS DE FIREBASE
+import { useNavigate } from "react-router-dom"; // Importar useNavigate
 import { db } from "../../../firebase"; // Ajusta la ruta a tu config de Firebase
 import {
   collection,
@@ -18,27 +20,26 @@ import {
   orderBy,
   Timestamp,
 } from "firebase/firestore";
-import moment from "moment"; // Necesitarás moment para formatear la fecha
+import moment from "moment";
 
 const DoctorDashboard = () => {
   const { user } = useAuth();
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
-  const [loading, setLoading] = useState(true); // Estado para la carga
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalPatients: 247,
     todayAppointments: 12,
     completed: 8,
     pending: 4,
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return; // Si no hay usuario, no hacer nada
+    if (!user) return;
 
     const fetchDoctorData = async () => {
       setLoading(true);
       try {
-        // 1. OBTENER LA ASIGNACIÓN DEL DOCTOR
-        // Asumo que la colección de doctores/admins se llama 'usuarios_admin'
         const adminUsersRef = collection(db, "usuarios_hospitales");
         const userQuery = query(adminUsersRef, where("uid", "==", user.uid));
         const userSnapshot = await getDocs(userQuery);
@@ -58,7 +59,6 @@ const DoctorDashboard = () => {
           return;
         }
 
-        // 2. CONSTRUIR LA CONSULTA PARA LOS APPOINTMENTS
         const todayStart = Timestamp.fromDate(moment().startOf("day").toDate());
         const appointmentsRef = collection(
           db,
@@ -70,20 +70,20 @@ const DoctorDashboard = () => {
         );
         const q = query(
           appointmentsRef,
-          where("appointmentDate", ">=", todayStart), // Citas desde el inicio de hoy
-          orderBy("appointmentDate", "asc") // Ordenadas por fecha
+          where("appointmentDate", ">=", todayStart),
+          orderBy("appointmentDate", "asc")
         );
 
-        // 3. OBTENER Y PROCESAR LOS DATOS
         const querySnapshot = await getDocs(q);
         const appointmentsList = querySnapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
+            // Asegúrate de que tus documentos de citas tengan el campo 'patientId'
+            patientId: data.patientUid,
             patient: data.patientFullName,
-            // Formateamos el Timestamp a una hora legible
             time: moment(data.appointmentDate.toDate()).format("hh:mm A"),
-            type: data.reason || "Consulta", // Usamos el motivo como tipo
+            type: data.reason || "Consulta",
             status: data.status,
           };
         });
@@ -97,7 +97,15 @@ const DoctorDashboard = () => {
     };
 
     fetchDoctorData();
-  }, [user]); // El efecto se ejecuta cuando el usuario esté disponible
+  }, [user]);
+
+  const handleAppointmentClick = (patientId) => {
+    if (patientId) {
+      navigate(`/dashboard-doctor/paciente/${patientId}`);
+    } else {
+      console.error("ID del paciente no encontrado en esta cita.");
+    }
+  };
 
   const StatCard = ({ icon, title, value, subtitle, color }) => (
     <div className="doctor-stat-card">
@@ -112,8 +120,12 @@ const DoctorDashboard = () => {
     </div>
   );
 
-  const AppointmentCard = ({ appointment }) => (
-    <div className={`doctor-appointment-item ${appointment.status}`}>
+  const AppointmentCard = ({ appointment, onClick }) => (
+    <div
+      className={`doctor-appointment-item ${appointment.status}`}
+      onClick={onClick}
+      style={{ cursor: "pointer" }}
+    >
       <div className="doctor-appointment-time">
         <FaClock />
         <span>{appointment.time}</span>
@@ -130,8 +142,7 @@ const DoctorDashboard = () => {
 
   return (
     <main className="doctor-dash-content">
-      {/* Encabezado de bienvenida (sin cambios) */}
-
+      {/* ... (sección de stats no cambia) ... */}
       <section className="doctor-stats-grid">
         <StatCard
           icon={<FaUserInjured />}
@@ -168,7 +179,6 @@ const DoctorDashboard = () => {
           <h2>Próximas Citas</h2>
           <button className="doctor-view-all-btn">Ver todas</button>
         </div>
-        {/* --- ÁREA DE CAMBIOS --- */}
         <div className="doctor-appointments-list">
           {loading ? (
             <p>Cargando citas...</p>
@@ -177,13 +187,20 @@ const DoctorDashboard = () => {
               No hay citas próximas para hoy.
             </p>
           ) : (
+            // ✅ CORRECCIÓN CLAVE AQUÍ
             upcomingAppointments.map((appointment) => (
-              <AppointmentCard key={appointment.id} appointment={appointment} />
+              <AppointmentCard
+                key={appointment.id}
+                appointment={appointment}
+                // Le pasamos la función y el ID correcto
+                onClick={() => handleAppointmentClick(appointment.patientId)}
+              />
             ))
           )}
         </div>
       </section>
 
+      {/* ... (resto del JSX no cambia) ... */}
       <div className="doctor-dash-grid">
         <section className="doctor-quick-actions">
           <div className="doctor-section-header">
@@ -208,7 +225,6 @@ const DoctorDashboard = () => {
             </button>
           </div>
         </section>
-
         <section className="doctor-recent-activity">
           <div className="doctor-section-header">
             <h2>Actividad Reciente</h2>
