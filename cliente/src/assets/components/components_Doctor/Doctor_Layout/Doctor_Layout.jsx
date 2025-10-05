@@ -52,7 +52,7 @@ const DoctorLayout = () => {
     if (user.claims?.hospitalId) {
       const consultoriosRef = collection(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         user.claims.hospitalId,
         "dr_office"
       );
@@ -98,7 +98,7 @@ const DoctorLayout = () => {
     const batch = writeBatch(db);
     const consultorioRef = doc(
       db,
-      "hospitals",
+      "hospitales_MedicalHand",
       user.claims.hospitalId,
       "dr_office",
       consultorioToRelease.id

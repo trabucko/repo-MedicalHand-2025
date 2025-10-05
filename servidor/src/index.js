@@ -32,7 +32,7 @@ app.get("/", (req, res) => {
 
 // Uso de las rutas
 app.use("/monitores", monitorRoutes);
-app.use("/doctores", doctorRoutes); // Uso de la nueva ruta para doctores
+app.use("/api/doctors", doctorRoutes); // Uso de la nueva ruta para doctores
 
 //puerto
 const PORT = process.env.PORT || 3000;

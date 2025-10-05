@@ -49,7 +49,7 @@ const Header = ({
 
     const consultorioRef = doc(
       db,
-      "hospitals",
+      "hospitales_MedicalHand",
       hospitalId,
       "dr_office",
       consultorio.id

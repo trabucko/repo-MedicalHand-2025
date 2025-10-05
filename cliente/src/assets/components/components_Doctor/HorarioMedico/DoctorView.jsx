@@ -47,7 +47,7 @@ const DoctorView = () => {
 
     const consultoriosRef = collection(
       db,
-      "hospitals",
+      "hospitales_MedicalHand",
       user.claims.hospitalId,
       "dr_office"
     );
@@ -116,7 +116,7 @@ const DoctorView = () => {
       setIsAssigning(consultorio.id);
       const consultorioDocRef = doc(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         user.claims.hospitalId,
         "dr_office",
         consultorio.id

@@ -26,7 +26,7 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
 
     const schedulesRef = collection(
       db,
-      "hospitals",
+      "hospitales_MedicalHand",
       hospitalId,
       "dr_office",
       consultorio.id,
@@ -104,7 +104,7 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
       // Referencia a la colección en Firestore
       const schedulesRef = collection(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         hospitalId,
         "dr_office",
         consultorio.id,
@@ -129,7 +129,7 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
       }
       const scheduleDocRef = doc(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         hospitalId,
         "dr_office",
         consultorio.id,
@@ -155,7 +155,7 @@ const DoctorScheduleManager = ({ hospitalId, consultorio }) => {
       }
       const scheduleDocRef = doc(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         hospitalId,
         "dr_office",
         consultorio.id,

@@ -68,7 +68,7 @@ const SelectHorario = ({
       try {
         const scheduleRef = collection(
           db,
-          "hospitals",
+          "hospitales_MedicalHand",
           "HL_FERNANDO_VP",
           "dr_office",
           consultorio.id,
@@ -187,7 +187,7 @@ const SelectHorario = ({
       // 2. CREAR EL DOCUMENTO EN LA COLECCIÓN 'appointments' DEL CONSULTORIO
       const appointmentsRef = collection(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         "HL_FERNANDO_VP",
         "dr_office",
         consultorio.id,
@@ -201,7 +201,7 @@ const SelectHorario = ({
       // 3. ACTUALIZAR EL HORARIO ('schedule') PARA ENLAZARLO Y RESERVARLO
       const scheduleRef = doc(
         db,
-        "hospitals",
+        "hospitales_MedicalHand",
         "HL_FERNANDO_VP",
         "dr_office",
         consultorio.id,
