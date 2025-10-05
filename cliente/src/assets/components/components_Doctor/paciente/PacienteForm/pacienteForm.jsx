@@ -12,15 +12,49 @@ import {
   FaPrint,
   FaTimes,
   FaPlus,
-  FaUpload,
   FaEdit,
   FaCheck,
-  FaFilePdf,
-  FaFileImage,
-  FaEye,
-  FaDownload,
+  // --- Iconos nuevos para estados ---
+  FaHourglassStart,
+  FaSyncAlt,
+  FaCheckCircle,
 } from "react-icons/fa";
 import "./pacienteForm.css";
+
+const formatDate = (dateInput) => {
+  if (!dateInput) {
+    return "";
+  }
+
+  // Opción 1: Si es un objeto de Firestore (tiene el método .toDate)
+  if (typeof dateInput.toDate === "function") {
+    return dateInput.toDate().toLocaleDateString("es-ES");
+  }
+
+  // Opción 2: Si es un string (puede ser ISO "2025-10-05T..." o "DD/MM/YYYY")
+  if (typeof dateInput === "string") {
+    // Intenta crear la fecha directamente (funciona para fechas ISO)
+    let d = new Date(dateInput);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("es-ES");
+    }
+
+    // Si falla, puede ser un string "DD/MM/YYYY". Lo intentamos manualmente.
+    const parts = dateInput.split("/");
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // El mes en JS empieza en 0
+      const year = parseInt(parts[2], 10);
+      d = new Date(year, month, day);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("es-ES");
+      }
+    }
+  }
+
+  // Si después de todos los intentos no se puede leer la fecha
+  return "Fecha inválida";
+};
 
 const PacienteForm = ({
   pacienteData,
@@ -34,9 +68,7 @@ const PacienteForm = ({
   eliminarExamen,
   agregarNota,
   eliminarNota,
-  marcarExamenCompletado, // <-- Añadido para la funcionalidad
-  descargarArchivo, // <-- Añadido para la funcionalidad
-  eliminarExamenArchivo, // <-- Añadido para la funcionalidad
+  marcarExamenCompletado,
 }) => {
   const TabPanel = useCallback(
     ({ children, value, index }) => (
@@ -405,7 +437,7 @@ const PacienteForm = ({
           <div className="px-card">
             <h4 className="px-card-title">Exámenes Solicitados</h4>
             <div className="px-exam-list">
-              {!pacienteData.examenesSolicitados?.length ? (
+              {!pacienteData.examsRequested?.length ? (
                 <div className="px-empty-state">
                   <p className="px-empty-message">
                     No se han solicitado exámenes
@@ -414,42 +446,52 @@ const PacienteForm = ({
                 </div>
               ) : (
                 <div className="px-exams-grid">
-                  {pacienteData.examenesSolicitados.map((examen, i) => (
-                    <div key={i} className="px-exam-item">
+                  {pacienteData.examsRequested.map((examen) => (
+                    // ✅ REPARACIÓN: Usar examen.id para el key y para eliminar.
+                    <div key={examen.id} className="px-exam-item">
                       <div className="px-exam-header">
                         <div className="px-exam-info">
                           <h5 className="px-exam-name">
                             {examen.nombre || examen}
                           </h5>
                           <div className="px-exam-meta">
+                            {/* ✅ CAMBIO: Iconos para los estados */}
                             <span
                               className={`px-exam-status ${
                                 examen.estado || "solicitado"
                               }`}
                             >
+                              {examen.estado === "completado" ? (
+                                <FaCheckCircle />
+                              ) : examen.estado === "proceso" ? (
+                                <FaSyncAlt />
+                              ) : (
+                                <FaHourglassStart />
+                              )}
                               {examen.estado === "completado"
-                                ? "✅ Completado"
+                                ? " Completado"
                                 : examen.estado === "proceso"
-                                ? "🔄 En proceso"
-                                : "⏳ Solicitado"}
+                                ? " En proceso"
+                                : " Solicitado"}
                             </span>
+                               {" "}
                             <span className="px-exam-date">
-                              {examen.fechaSolicitud ||
-                                new Date().toLocaleDateString("es-ES")}
+                              {formatDate(examen.fechaSolicitud)}
                             </span>
                           </div>
                         </div>
                         <div className="px-exam-actions">
                           <button
                             className="px-btn-icon-small"
-                            onClick={() => marcarExamenCompletado(i)}
+                            onClick={() => marcarExamenCompletado(examen.id)}
                             title="Marcar como completado"
                           >
                             <FaCheck />
                           </button>
+                          {/* ✅ REPARACIÓN: Llamar a eliminarExamen con el id del examen */}
                           <button
                             className="px-btn-remove"
-                            onClick={() => eliminarExamen(i)}
+                            onClick={() => eliminarExamen(examen.id)}
                             title="Eliminar examen"
                           >
                             <FaTimes />
@@ -467,73 +509,16 @@ const PacienteForm = ({
               )}
             </div>
           </div>
+
+          {/* ✅ MODIFICADO: Solo se muestra la lista de resultados, sin formulario de carga */}
           <div className="px-card">
-            <h4 className="px-card-title">Gestión de Resultados</h4>
-            <div className="px-upload-section">
-              <div className="px-form-group">
-                <label className="px-label">Seleccionar Examen</label>
-                <select
-                  className="px-select"
-                  value={pacienteData.examenSeleccionado || ""}
-                  onChange={(e) =>
-                    handleInputChange("examenSeleccionado", e.target.value)
-                  }
-                >
-                  <option value="">-- Seleccione un examen --</option>
-                  {pacienteData.examenesSolicitados?.map((examen, i) => (
-                    <option key={i} value={i}>
-                      {examen.nombre || examen}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="px-form-group">
-                <label className="px-label">Subir Resultados</label>
-                <div className="px-file-upload">
-                  <input
-                    type="file"
-                    className="px-file-input"
-                    id="file-upload"
-                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    multiple
-                    onChange={(e) =>
-                      handleInputChange("archivosExamenes", e.target.files)
-                    }
-                  />
-                  <label htmlFor="file-upload" className="px-file-label">
-                    <FaUpload className="px-btn-icon" />
-                    Seleccionar archivos (PDF, imágenes, documentos)
-                  </label>
-                </div>
-                <small className="px-file-hint">Máximo 10MB por archivo</small>
-              </div>
-              <div className="px-form-group">
-                <label className="px-label">Observaciones de Resultados</label>
-                <textarea
-                  className="px-textarea"
-                  rows="3"
-                  placeholder="Ingrese observaciones relevantes sobre los resultados..."
-                  value={pacienteData.observacionesResultados || ""}
-                  onChange={(e) =>
-                    handleInputChange("observacionesResultados", e.target.value)
-                  }
-                />
-              </div>
-              <button className="px-btn px-btn-primary">
-                <FaSave className="px-btn-icon" />
-                Guardar Resultados
-              </button>
-            </div>
-          </div>
-          <div className="px-card">
-            <h4 className="px-card-title">Resultados Guardados</h4>
+            <h4 className="px-card-title">Resultados de Exámenes</h4>
             <div className="px-results-list">
               {!pacienteData.resultadosArchivos?.length ? (
                 <div className="px-empty-state">
                   <p className="px-empty-message">
-                    No se han subido resultados
+                    No hay resultados de exámenes disponibles
                   </p>
-                  <small>Suba resultados usando el formulario superior</small>
                 </div>
               ) : (
                 <div className="px-files-grid">
@@ -646,7 +631,7 @@ const PacienteForm = ({
           </div>
           <div className="px-notes-list">
             <h4 className="px-section-subtitle">Notas Guardadas</h4>
-            {!pacienteData.notas?.length ? (
+            {!pacienteData.notes?.length ? (
               <div className="px-empty-state">
                 <p className="px-empty-message">No se han agregado notas aún</p>
                 <small>
@@ -655,7 +640,7 @@ const PacienteForm = ({
               </div>
             ) : (
               <div className="px-items-grid">
-                {pacienteData.notas.map((nota, i) => (
+                {pacienteData.notes.map((nota, i) => (
                   <div key={nota.id || i} className="px-note-item">
                     <div className="px-note-header">
                       <span
@@ -684,10 +669,10 @@ const PacienteForm = ({
                     </div>
                     <div className="px-note-meta">
                       <span className="px-note-date">
-                        {nota.fecha || new Date().toLocaleDateString("es-ES")}
+                        {formatDate(nota.fecha)}
                       </span>
                       <span className="px-note-author">
-                        {nota.autor || "Médico"}
+                        Dr. {nota.autor || "Médico"}
                       </span>
                     </div>
                   </div>

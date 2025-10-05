@@ -44,7 +44,7 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case "pendiente":
-        return "⏳";
+        return "";
       case "confirmada":
         return "✅";
       case "cancelado":
@@ -168,10 +168,6 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
                 <div className="info-item full-width">
                   <label>Dirección</label>
                   <span>{contactInfo.address || "N/A"}</span>
-                </div>
-                <div className="info-item full-width">
-                  <label>UID del Sistema</label>
-                  <span className="uid-text">{paciente.uid || "N/A"}</span>
                 </div>
               </div>
             </div>

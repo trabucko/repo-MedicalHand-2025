@@ -1,20 +1,19 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-// ❌ Ya no se importan hooks de navegación o autenticación aquí
 
-// ✅ El componente ahora recibe props para manejar el submit y los errores
-export default function LoginForm({ onLogin, error }) {
+// ✅ El componente ya recibe `isLoading` como prop
+export default function LoginForm({ onLogin, error, isLoading }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Llama a la función que le pasó el componente padre (Login.jsx)
+    // No llama a onLogin si ya está cargando
+    if (isLoading) return;
     onLogin(email, password);
   };
 
   return (
-    // ❌ Se eliminó el div .page-container, ya no es necesario aquí
     <StyledWrapper>
       <form className="form" onSubmit={handleSubmit}>
         <div className="form_front">
@@ -27,6 +26,8 @@ export default function LoginForm({ onLogin, error }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            // ✅ Deshabilita el input mientras carga
+            disabled={isLoading}
           />
           <label>Contraseña:</label>
           <input
@@ -36,10 +37,15 @@ export default function LoginForm({ onLogin, error }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            // ✅ Deshabilita el input mientras carga
+            disabled={isLoading}
           />
-          <button className="btn" type="submit">
-            Entrar
+
+          {/* ✅ 1. Botón condicional */}
+          <button className="btn" type="submit" disabled={isLoading}>
+            {isLoading ? <div className="loader"></div> : "Entrar"}
           </button>
+
           {error && (
             <p style={{ color: "rgba(235, 91, 103, 1)", textAlign: "center" }}>
               {error}
@@ -53,8 +59,9 @@ export default function LoginForm({ onLogin, error }) {
     </StyledWrapper>
   );
 }
+
 const StyledWrapper = styled.div`
-  /* ... (tu código de estilo permanece sin cambios) */
+  /* ... (tu código de estilo de container, form, etc. no cambia) */
 
   .container {
     display: flex;
@@ -132,7 +139,7 @@ const StyledWrapper = styled.div`
     background-color: #21212128;
     border-radius: 0px;
     border: none;
-    border-bottom: 2px solid #3eb489;
+    border-bottom: 2px solid #5b648fff;
     margin-top: -2rem;
   }
 
@@ -145,10 +152,11 @@ const StyledWrapper = styled.div`
     opacity: 0;
   }
 
+  /* ✅ 2. Estilos actualizados para el botón */
   .btn {
     padding: 10px 35px;
     cursor: pointer;
-    background-color: #39786eff;
+    background-color: #395378ff;
     margin-top: 1rem;
     border-radius: 15px;
     border: none;
@@ -157,11 +165,40 @@ const StyledWrapper = styled.div`
     font-size: 15px;
     font-weight: bold;
     transition: 0.35s;
+
+    /* Añadido para centrar el loader y evitar que el botón cambie de tamaño */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 45px;
   }
 
   .btn:hover {
     transform: scale(1.05);
-    background-color: #338f80ff;
+    background-color: #335e8fff;
+  }
+
+  /* ✅ Estilo para el botón cuando está deshabilitado */
+  .btn:disabled {
+    background-color: #304ea1ff; /* Un tono más oscuro/apagado */
+    cursor: not-allowed;
+    transform: none; /* Evita el efecto hover al estar deshabilitado */
+  }
+
+  /* ✅ 3. Estilos para el spinner */
+  .loader {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-left-color: #fff;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .form .switch {

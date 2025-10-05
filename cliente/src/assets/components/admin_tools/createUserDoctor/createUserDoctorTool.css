@@ -269,3 +269,10 @@ input[type="checkbox"]:checked + .toggle-slider::before {
     justify-content: center;
   }
 }
+
+.error-text {
+  color: #e53e3e; /* Un color rojo para errores */
+  font-size: 0.875rem; /* Un poco más pequeño que el texto normal */
+  margin-top: 4px; /* Espacio entre el input y el mensaje */
+  height: 1rem; /* Ocupa espacio para que el layout no salte */
+}
