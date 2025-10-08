@@ -1,13 +1,9 @@
 import { authAdmin, db } from "../config/firebaseAdmin.js";
 import admin from "firebase-admin";
 
-//CREATE
+// CREATE
 export const createDoctor = async (req, res) => {
-  console.log("Datos recibidos en el body:", req.body);
-
   try {
-    console.log("Datos recibidos en el body:", req.body);
-
     const {
       email,
       password,
@@ -20,34 +16,28 @@ export const createDoctor = async (req, res) => {
       assignedOfficeId,
     } = req.body;
 
-    // Validación básica de campos obligatorios
     if (!email || !password || !firstName || !cedula || !especialidad) {
       return res.status(400).json({ error: "Faltan campos obligatorios." });
     }
-
     const authUser = req.user;
-
     if (!authUser || authUser.role !== "hospital_administrador") {
       return res
         .status(403)
         .json({ error: "No autorizado. Debes ser administrador." });
     }
-
     const hospitalId = authUser.hospitalId;
-
-    // Crear usuario en Firebase Auth
     const userRecord = await authAdmin.createUser({ email, password });
-
     await authAdmin.setCustomUserClaims(userRecord.uid, {
       role: "hospital_doctor",
       hospitalId,
     });
-
     const fullName = lastName ? `${firstName} ${lastName}` : firstName;
 
-    // Guardar usuario en Firestore
+    // Estructura RÁPIDA: Un solo guardado en un único lugar.
     await db
-      .collection("usuarios_hospitales")
+      .collection("hospitales_MedicalHand")
+      .doc(hospitalId)
+      .collection("users")
       .doc(userRecord.uid)
       .set({
         uid: userRecord.uid,
@@ -67,50 +57,43 @@ export const createDoctor = async (req, res) => {
       });
 
     return res.status(201).json({
-      message: "Usuario hospital_doctor creado con éxito",
+      message: "Usuario hospital_doctor creado con éxito.",
       doctorId: userRecord.uid,
-      email,
-      cedula, //  incluimos cedula en la respuesta para chequear que se recibió
+      email: userRecord.email, // <-- Añade esta línea
     });
   } catch (error) {
     console.error("Error creando usuario hospital_doctor:", error);
-
     if (error.code === "auth/email-already-exists") {
       return res
         .status(409)
         .json({ error: "El correo electrónico ya está en uso." });
     }
-
     return res.status(500).json({ error: error.message });
   }
 };
 
-//READ
-
+// READ (Consulta RÁPIDA y optimizada)
 export const getAllDoctors = async (req, res) => {
   try {
-    const authUser = req.user; // Usuario administrador autenticado
-
-    // Asegurarse que es un administrador
+    const authUser = req.user;
     if (authUser.role !== "hospital_administrador") {
       return res.status(403).json({ error: "No autorizado." });
     }
 
     const snapshot = await db
-      .collection("usuarios_hospitales")
-      .where("hospitalId", "==", authUser.hospitalId)
+      .collection("hospitales_MedicalHand")
+      .doc(authUser.hospitalId)
+      .collection("users")
       .where("role", "==", "hospital_doctor")
       .get();
 
     if (snapshot.empty) {
-      return res.status(200).json([]); // Devuelve un array vacío si no hay doctores
+      return res.status(200).json([]);
     }
-
     const doctors = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
     }));
-
     return res.status(200).json(doctors);
   } catch (error) {
     console.error("Error al obtener los doctores:", error);
@@ -118,25 +101,22 @@ export const getAllDoctors = async (req, res) => {
   }
 };
 
-// READ ONE: Obtiene un doctor por su ID.
-
+// READ ONE (Búsqueda RÁPIDA y directa)
 export const getDoctorById = async (req, res) => {
   try {
     const { id } = req.params;
-    const doc = await db.collection("usuarios_hospitales").doc(id).get();
+    const authUser = req.user;
 
-    if (!doc.exists) {
+    const doc = await db
+      .collection("hospitales_MedicalHand")
+      .doc(authUser.hospitalId)
+      .collection("users")
+      .doc(id)
+      .get();
+
+    if (!doc.exists || doc.data().role !== "hospital_doctor") {
       return res.status(404).json({ error: "Doctor no encontrado." });
     }
-
-    // Verificar que el admin pertenece al mismo hospital que el doctor
-    const authUser = req.user;
-    if (doc.data().hospitalId !== authUser.hospitalId) {
-      return res
-        .status(403)
-        .json({ error: "No autorizado para ver este doctor." });
-    }
-
     return res.status(200).json({ id: doc.id, ...doc.data() });
   } catch (error) {
     console.error("Error al obtener el doctor:", error);
@@ -144,38 +124,33 @@ export const getDoctorById = async (req, res) => {
   }
 };
 
-//UPDATE: Actualiza los datos de un doctor.
-
+// UPDATE (Acceso RÁPIDO y directo)
 export const updateDoctor = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const authUser = req.user;
 
-    const doctorRef = db.collection("usuarios_hospitales").doc(id);
+    const doctorRef = db
+      .collection("hospitales_MedicalHand")
+      .doc(authUser.hospitalId)
+      .collection("users")
+      .doc(id);
+
     const doc = await doctorRef.get();
-
-    if (!doc.exists) {
+    if (!doc.exists || doc.data().role !== "hospital_doctor") {
       return res.status(404).json({ error: "Doctor no encontrado." });
     }
 
-    //  Verificar permisos del admin
-    const authUser = req.user;
-    if (doc.data().hospitalId !== authUser.hospitalId) {
-      return res
-        .status(403)
-        .json({ error: "No autorizado para editar este doctor." });
-    }
+    delete data.role;
+    delete data.hospitalId;
 
-    // Actualizar datos en Firestore
     await doctorRef.update(data);
-
-    // Si se actualiza el email, también hay que actualizarlo en Firebase Auth
     if (data.email) {
       await authAdmin.updateUser(id, {
         email: data.email,
       });
     }
-
     return res.status(200).json({ message: "Doctor actualizado con éxito." });
   } catch (error) {
     console.error("Error al actualizar el doctor:", error);
@@ -183,31 +158,24 @@ export const updateDoctor = async (req, res) => {
   }
 };
 
-// DELETE: Elimina un doctor.
-
+// DELETE (Acceso RÁPIDO y directo)
 export const deleteDoctor = async (req, res) => {
   try {
     const { id } = req.params;
+    const authUser = req.user;
 
-    const doctorRef = db.collection("usuarios_hospitales").doc(id);
+    const doctorRef = db
+      .collection("hospitales_MedicalHand")
+      .doc(authUser.hospitalId)
+      .collection("users")
+      .doc(id);
+
     const doc = await doctorRef.get();
-
-    if (!doc.exists) {
+    if (!doc.exists || doc.data().role !== "hospital_doctor") {
       return res.status(404).json({ error: "Doctor no encontrado." });
     }
-
-    // Verificar permisos del admin
-    const authUser = req.user;
-    if (doc.data().hospitalId !== authUser.hospitalId) {
-      return res
-        .status(403)
-        .json({ error: "No autorizado para eliminar este doctor." });
-    }
-
-    // **Importante:** Eliminar de ambos, Auth y Firestore
-    await authAdmin.deleteUser(id); // Eliminar de Firebase Authentication
-    await doctorRef.delete(); // Eliminar de Firestore
-
+    await authAdmin.deleteUser(id);
+    await doctorRef.delete();
     return res.status(200).json({ message: "Doctor eliminado con éxito." });
   } catch (error) {
     console.error("Error al eliminar el doctor:", error);

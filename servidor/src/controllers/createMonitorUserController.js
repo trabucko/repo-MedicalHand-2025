@@ -1,5 +1,6 @@
 import { authAdmin, db } from "../config/firebaseAdmin.js";
 import admin from "firebase-admin";
+
 export const createMonitor = async (req, res) => {
   try {
     const { email, password, firstName, lastName, phone, cedula } = req.body;
@@ -13,41 +14,41 @@ export const createMonitor = async (req, res) => {
 
     const hospitalId = authUser.hospitalId;
 
-    // Crear usuario monitor en Firebase Auth
     const userRecord = await authAdmin.createUser({ email, password });
 
-    // Asignar claims personalizados
     await authAdmin.setCustomUserClaims(userRecord.uid, {
       role: "hospital_monitor",
       hospitalId,
     });
 
-    // Crear nombre completo
     const fullName = lastName ? `${firstName} ${lastName}` : firstName || "";
-
-    // Guardar en Firestore
+    0;
+    // AHORA: Guardamos todo en un único documento, sin duplicados.
     await db
-      .collection("usuarios_hospitales")
+      .collection("hospitales_MedicalHand")
+      .doc(hospitalId)
+      .collection("users")
       .doc(userRecord.uid)
       .set({
+        uid: userRecord.uid,
         email,
-        role: "hospital_monitor",
+        role: "hospital_monitor", // El rol es un campo, como debe ser.
         hospitalId,
         fullName,
+        firstName: firstName || "",
+        lastName: lastName || "",
         phone: phone || null,
         cedula: cedula || null,
-        isActive: true, // por defecto activo
+        isActive: true,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+    // El segundo guardado que creaba la subcolección anidada se ha eliminado.
+
     return res.status(201).json({
-      message: "Usuario hospital_monitor creado con éxito",
-      email,
-      hospitalId,
-      fullName,
-      phone: phone || null,
-      cedula: cedula || null,
-      isActive: true,
+      message: "Usuario hospital_monitor creado con éxito.",
+      monitorId: userRecord.uid,
+      email: userRecord.email, // <-- Añade esta lín ea
     });
   } catch (error) {
     console.error("Error creando usuario hospital_monitor:", error);

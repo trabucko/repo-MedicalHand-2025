@@ -7,7 +7,6 @@ import {
   FaHospital,
   FaCalendarAlt,
   FaClock,
-  FaMapMarkerAlt,
 } from "react-icons/fa";
 import "./SelectHorario.css";
 import { Button, Modal } from "@mui/material";
@@ -15,11 +14,11 @@ import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import ResumenCita from "../SelectHorario/resumenCita/resumenCita";
+import ResumenCita from "./resumenCita/resumenCita";
 import { db } from "../../../../../../firebase";
 import {
   collection,
-  getDocs,
+  onSnapshot, // Usaremos onSnapshot para tiempo real
   doc,
   updateDoc,
   Timestamp,
@@ -35,6 +34,7 @@ const SelectHorario = ({
   onBack,
   onConfirm,
   appointmentRequest = {},
+  hospitalId, // La prop que ya estás recibiendo
 }) => {
   const [eventsList, setEventsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,58 +60,90 @@ const SelectHorario = ({
   };
 
   useEffect(() => {
-    if (!consultorio || !consultorio.id) return;
+    // Verificamos que tengamos los IDs necesarios antes de consultar
+    if (!hospitalId || !consultorio?.id) {
+      console.error(
+        "[SelectHorario] Falta hospitalId o consultorio.id para buscar horarios."
+      );
+      setLoading(false);
+      return;
+    }
 
-    const fetchSchedule = async () => {
-      setLoading(true);
-      const generatedEvents = [];
-      try {
-        const scheduleRef = collection(
-          db,
-          "hospitales_MedicalHand",
-          "HL_FERNANDO_VP",
-          "dr_office",
-          consultorio.id,
-          "schedules"
+    setLoading(true);
+
+    // CONSTRUIMOS LA RUTA DINÁMICA
+    const scheduleRef = collection(
+      db,
+      "hospitales_MedicalHand",
+      hospitalId, // <-- Usamos el hospitalId dinámico
+      "dr_office",
+      consultorio.id,
+      "schedules"
+    );
+
+    // Usamos 'onSnapshot' para escuchar cambios en tiempo real
+    const unsubscribe = onSnapshot(
+      scheduleRef,
+      (snapshot) => {
+        console.log(
+          `[SelectHorario] Firestore respondió con ${snapshot.size} horarios.`
         );
-        const querySnapshot = await getDocs(scheduleRef);
-        querySnapshot.forEach((doc) => {
+        const generatedEvents = [];
+
+        snapshot.forEach((doc) => {
           const data = doc.data();
-          // Simplificado para leer solo eventos con fecha de inicio y fin
-          if (data.start && data.end) {
-            if (
-              moment(data.start.toDate()).isAfter(moment()) &&
-              data.isAvailable
-            ) {
+          const docId = doc.id;
+
+          if (data.start?.toDate && data.end?.toDate) {
+            const start = data.start.toDate();
+            const end = data.end.toDate();
+
+            // ▼▼▼ LÓGICA DE FILTRADO ELIMINADA ▼▼▼
+            // Se elimina el 'if (moment(start).isAfter(moment()))' para mostrar todos los horarios recibidos
+
+            if (data.isAvailable) {
               generatedEvents.push({
-                id: doc.id, // ID del horario para la actualización
-                title: "Espacio Disponible",
-                start: data.start.toDate(),
-                end: data.end.toDate(),
+                id: docId,
+                title: "Disponible",
+                start,
+                end,
                 isBookable: true,
                 isBooked: false,
               });
-            } else if (!data.isAvailable) {
+            } else {
               generatedEvents.push({
-                id: doc.id,
+                id: docId,
                 title: "Reservado",
-                start: data.start.toDate(),
-                end: data.end.toDate(),
+                start,
+                end,
                 isBookable: false,
                 isBooked: true,
               });
             }
+            // ▲▲▲ FIN DE LA MODIFICACIÓN ▲▲▲
+          } else {
+            console.warn(
+              `[SelectHorario] El horario con ID ${docId} tiene fechas inválidas.`
+            );
           }
         });
+
+        console.log(
+          "[SelectHorario] Horarios procesados para el calendario:",
+          generatedEvents
+        );
         setEventsList(generatedEvents);
-      } catch (error) {
-        console.error("Error al procesar la agenda:", error);
-      } finally {
+        setLoading(false);
+      },
+      (error) => {
+        console.error("[SelectHorario] Error al obtener horarios:", error);
         setLoading(false);
       }
-    };
-    fetchSchedule();
-  }, [consultorio]);
+    );
+
+    // Limpiamos el listener cuando el componente se desmonte
+    return () => unsubscribe();
+  }, [consultorio, hospitalId]);
 
   const handleSelectEvent = (event) => {
     if (event.isBookable) {
@@ -123,50 +155,40 @@ const SelectHorario = ({
   };
 
   const handleOpenModal = () => {
-    if (!appointmentRequest || !appointmentRequest.id) {
-      alert(
-        "Error: No se ha proporcionado una solicitud de cita válida para agendar."
-      );
+    if (!appointmentRequest?.id) {
+      alert("Error: No se ha proporcionado una solicitud de cita válida.");
       return;
     }
     if (selectedEvent) {
-      const formattedDate = moment(selectedEvent.start).format("DD/MM/YYYY");
-      const formattedTime = moment(selectedEvent.start).format("HH:mm");
       const citaData = {
-        // Ya no necesitamos pasar el ID de la cita original aquí,
-        // porque la lógica de handleConfirmCita ya lo tiene de `appointmentRequest`.
         consultorio,
         doctor,
-        fecha: formattedDate,
-        hora: formattedTime,
+        fecha: moment(selectedEvent.start).format("DD/MM/YYYY"),
+        hora: moment(selectedEvent.start).format("HH:mm"),
         patient: {
-          fullName: appointmentRequest?.fullName || "Paciente no especificado",
-          reason: appointmentRequest?.reason || "Sin especificar",
+          fullName: appointmentRequest?.fullName || "N/A",
+          reason: appointmentRequest?.reason || "N/A",
         },
-        hospital: appointmentRequest?.hospital || "Hospital no especificado",
+        hospital: appointmentRequest?.hospital || "N/A",
       };
       setCitaConfirmadaData(citaData);
       setShowModal(true);
     } else {
-      alert("Por favor, selecciona un horario en el calendario.");
+      alert("Por favor, selecciona un horario disponible en el calendario.");
     }
   };
 
   const handleCloseModal = () => setShowModal(false);
 
-  // --- FUNCIÓN DE CONFIRMACIÓN COMPLETAMENTE REFACTORIZADA ---
   const handleConfirmCita = async () => {
-    if (!appointmentRequest || !appointmentRequest.id) {
-      alert("No se encontró la solicitud de cita original para procesar.");
-      return;
-    }
-    if (!selectedEvent || !selectedEvent.id) {
-      alert("Error: No se ha seleccionado un horario válido del calendario.");
+    if (!appointmentRequest?.id || !selectedEvent?.id || !hospitalId) {
+      alert(
+        "Faltan datos para confirmar la cita (solicitud, horario o hospital)."
+      );
       return;
     }
 
     try {
-      // 1. CONSTRUIR LOS DATOS DEL NUEVO APPOINTMENT
       const fechaHora = moment(
         `${citaConfirmadaData.fecha} ${citaConfirmadaData.hora}`,
         "DD/MM/YYYY HH:mm"
@@ -184,11 +206,11 @@ const SelectHorario = ({
         createdAt: Timestamp.now(),
       };
 
-      // 2. CREAR EL DOCUMENTO EN LA COLECCIÓN 'appointments' DEL CONSULTORIO
+      // Usamos la ruta dinámica para crear la nueva cita
       const appointmentsRef = collection(
         db,
         "hospitales_MedicalHand",
-        "HL_FERNANDO_VP",
+        hospitalId,
         "dr_office",
         consultorio.id,
         "appointments"
@@ -198,11 +220,11 @@ const SelectHorario = ({
         newAppointmentData
       );
 
-      // 3. ACTUALIZAR EL HORARIO ('schedule') PARA ENLAZARLO Y RESERVARLO
+      // Usamos la ruta dinámica para actualizar el horario
       const scheduleRef = doc(
         db,
         "hospitales_MedicalHand",
-        "HL_FERNANDO_VP",
+        hospitalId,
         "dr_office",
         consultorio.id,
         "schedules",
@@ -213,15 +235,14 @@ const SelectHorario = ({
         appointmentId: newAppointmentRef.id,
       });
 
-      // 4. ACTUALIZAR LA SOLICITUD ORIGINAL A 'confirmada' PARA EL HISTORIAL
+      // Actualizamos la solicitud original
       const originalRequestRef = doc(db, "citas", appointmentRequest.id);
-      const dataToUpdate = {
+      await updateDoc(originalRequestRef, {
         status: "confirmada",
-        assignedDate: Timestamp.fromDate(fechaHora), // ✅ Añadir la fecha
-        assignedDoctor: doctor.nombre, // ✅ Añadir el doctor
-        clinicOffice: consultorio.name, // ✅ Añadir el consultorio
-      };
-      await updateDoc(originalRequestRef, dataToUpdate);
+        assignedDate: Timestamp.fromDate(fechaHora),
+        assignedDoctor: doctor.nombre,
+        clinicOffice: consultorio.name,
+      });
 
       alert("¡Cita agendada y horario reservado exitosamente!");
       setShowModal(false);
@@ -317,7 +338,7 @@ const SelectHorario = ({
         </div>
         <div className="sh-big-calendar-container">
           {loading ? (
-            <p>Cargando agenda...</p>
+            <div className="calendar-loader">Cargando agenda...</div>
           ) : (
             <Calendar
               localizer={localizer}
@@ -325,7 +346,7 @@ const SelectHorario = ({
               messages={messages}
               startAccessor="start"
               endAccessor="end"
-              style={{ height: 690 }}
+              style={{ height: "calc(100vh - 200px)" }} // Ajuste de altura
               date={calendarDate}
               onNavigate={(newDate) => setCalendarDate(newDate)}
               views={["month", "week", "day", "agenda"]}

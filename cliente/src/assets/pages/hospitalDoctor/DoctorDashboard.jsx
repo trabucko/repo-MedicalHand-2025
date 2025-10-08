@@ -10,12 +10,14 @@ import {
 } from "react-icons/fa";
 import "./DoctorDashboard.css";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom"; // Importar useNavigate
-import { db } from "../../../firebase"; // Ajusta la ruta a tu config de Firebase
+import { useNavigate } from "react-router-dom";
+import { db } from "../../../firebase";
 import {
   collection,
   query,
   where,
+  getDoc, // Importamos getDoc para buscar un único documento
+  doc, // Importamos doc para referenciar un único documento
   getDocs,
   orderBy,
   Timestamp,
@@ -35,39 +37,60 @@ const DoctorDashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
+    // Si no tenemos la información del usuario del contexto, no hacemos nada.
+    if (!user || !user.hospitalId) {
+      setLoading(false);
+      return;
+    }
 
-    const fetchDoctorData = async () => {
+    const fetchDoctorDataAndAppointments = async () => {
       setLoading(true);
       try {
-        const adminUsersRef = collection(db, "usuarios_hospitales");
-        const userQuery = query(adminUsersRef, where("uid", "==", user.uid));
-        const userSnapshot = await getDocs(userQuery);
+        // 1. Construimos la RUTA CORRECTA al documento del doctor.
+        const userDocRef = doc(
+          db,
+          "hospitales_MedicalHand",
+          user.hospitalId,
+          "users",
+          user.uid
+        );
 
-        if (userSnapshot.empty) {
-          console.log("No se encontró el documento del doctor.");
+        // 2. Obtenemos el documento del doctor para ver si tiene un consultorio asignado.
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (!userDocSnap.exists()) {
+          console.log(
+            "No se encontró el documento del doctor en la ruta correcta."
+          );
           setLoading(false);
           return;
         }
 
-        const doctorData = userSnapshot.docs[0].data();
-        const { hospitalId, assignedOfficeId } = doctorData;
+        const doctorData = userDocSnap.data();
+        const { assignedOfficeId } = doctorData; // Obtenemos el ID del consultorio asignado.
 
-        if (!hospitalId || !assignedOfficeId) {
-          console.log("El doctor no tiene un consultorio asignado.");
+        // 3. Verificamos si el doctor tiene un consultorio asignado (el paso que querías).
+        if (!assignedOfficeId) {
+          console.log(
+            "El doctor no tiene un consultorio asignado en su perfil."
+          );
+          // Aquí podrías redirigir o mostrar un mensaje para que seleccione uno.
           setLoading(false);
           return;
         }
 
+        // 4. Si tiene consultorio, construimos la RUTA CORRECTA a las citas.
         const todayStart = Timestamp.fromDate(moment().startOf("day").toDate());
         const appointmentsRef = collection(
           db,
-          "hospitals",
-          hospitalId,
+          "hospitales_MedicalHand", // Colección principal correcta
+          user.hospitalId, // ID del hospital desde el contexto
           "dr_office",
-          assignedOfficeId,
+          assignedOfficeId, // ID del consultorio que acabamos de encontrar
           "appointments"
         );
+
+        // 5. Buscamos las citas de hoy en adelante.
         const q = query(
           appointmentsRef,
           where("appointmentDate", ">=", todayStart),
@@ -77,12 +100,16 @@ const DoctorDashboard = () => {
         const querySnapshot = await getDocs(q);
         const appointmentsList = querySnapshot.docs.map((doc) => {
           const data = doc.data();
+          // Hacemos una verificación para evitar errores si 'appointmentDate' no existe
+          const time = data.appointmentDate
+            ? moment(data.appointmentDate.toDate()).format("hh:mm A")
+            : "Hora no definida";
+
           return {
             id: doc.id,
-            // Asegúrate de que tus documentos de citas tengan el campo 'patientId'
             patientId: data.patientUid,
             patient: data.patientFullName,
-            time: moment(data.appointmentDate.toDate()).format("hh:mm A"),
+            time: time,
             type: data.reason || "Consulta",
             status: data.status,
           };
@@ -90,14 +117,17 @@ const DoctorDashboard = () => {
 
         setUpcomingAppointments(appointmentsList);
       } catch (error) {
-        console.error("Error al obtener las citas:", error);
+        console.error(
+          "Error al obtener los datos del doctor y sus citas:",
+          error
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDoctorData();
-  }, [user]);
+    fetchDoctorDataAndAppointments();
+  }, [user]); // El efecto depende del objeto 'user'
 
   const handleAppointmentClick = (patientId) => {
     if (patientId) {
@@ -135,14 +165,24 @@ const DoctorDashboard = () => {
         <p>{appointment.type}</p>
       </div>
       <div className={`doctor-appointment-status ${appointment.status}`}>
-        {appointment.status === "confirmada" ? "Confirmado" : "Pendiente"}
+        {appointment.status}
       </div>
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="loading-container" style={{ padding: "50px" }}>
+        <div className="loading-spinner"></div>
+        <h2 style={{ textAlign: "center", marginTop: "20px" }}>
+          Cargando información del doctor...
+        </h2>
+      </div>
+    );
+  }
+
   return (
     <main className="doctor-dash-content">
-      {/* ... (sección de stats no cambia) ... */}
       <section className="doctor-stats-grid">
         <StatCard
           icon={<FaUserInjured />}
@@ -180,19 +220,15 @@ const DoctorDashboard = () => {
           <button className="doctor-view-all-btn">Ver todas</button>
         </div>
         <div className="doctor-appointments-list">
-          {loading ? (
-            <p>Cargando citas...</p>
-          ) : upcomingAppointments.length === 0 ? (
+          {upcomingAppointments.length === 0 ? (
             <p className="doctor-no-appointments">
               No hay citas próximas para hoy.
             </p>
           ) : (
-            // ✅ CORRECCIÓN CLAVE AQUÍ
             upcomingAppointments.map((appointment) => (
               <AppointmentCard
                 key={appointment.id}
                 appointment={appointment}
-                // Le pasamos la función y el ID correcto
                 onClick={() => handleAppointmentClick(appointment.patientId)}
               />
             ))
@@ -200,7 +236,6 @@ const DoctorDashboard = () => {
         </div>
       </section>
 
-      {/* ... (resto del JSX no cambia) ... */}
       <div className="doctor-dash-grid">
         <section className="doctor-quick-actions">
           <div className="doctor-section-header">

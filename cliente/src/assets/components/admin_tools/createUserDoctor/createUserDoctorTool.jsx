@@ -312,7 +312,7 @@ function CreateUserDoctorTool() {
 
         {errors.form && (
           <div className="message error-message">
-            <span className="message-icon">⚠️</span>
+            <span className="message-icon">⚠︎</span>
             <span>{errors.form}</span>
           </div>
         )}

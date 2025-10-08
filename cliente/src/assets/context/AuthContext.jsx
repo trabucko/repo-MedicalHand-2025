@@ -1,10 +1,10 @@
-// src/assets/context/AuthContext.jsx (Versión Final)
+// src/assets/context/AuthContext.jsx (Versión Adaptada)
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { auth, app } from "../../firebase.js";
-import { useLoading } from "./LoadingContext.jsx"; // ✅ 1. Importa el hook del LoadingContext
+import { useLoading } from "./LoadingContext.jsx";
 
 const db = getFirestore(app);
 const AuthContext = createContext();
@@ -12,60 +12,97 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { showLoader, hideLoader } = useLoading(); // ✅ 2. Obtén las funciones para mostrar/ocultar el loader
+  const { showLoader, hideLoader } = useLoading();
 
   const logout = async () => {
-    // No necesitamos el loader aquí porque la redirección es instantánea
     await signOut(auth);
   };
 
   useEffect(() => {
-    // ✅ 3. MUESTRA EL LOADER al inicio de la verificación
-    // Esto se ejecutará tanto en la carga inicial de la página como después del login.
     showLoader();
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // ... (toda tu lógica para obtener claims y datos de firestore no cambia)
           const tokenResult = await firebaseUser.getIdTokenResult(true);
           const claims = tokenResult.claims;
-          const userDocRef = doc(db, "usuarios_hospitales", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          const firestoreUserData = userDocSnap.data();
-          let hospitalData = {};
-          if (claims.hospitalId) {
-            const hospitalDocRef = doc(
-              db,
-              "hospitales_MedicalHand",
-              claims.hospitalId
-            );
-            const hospitalDocSnap = await getDoc(hospitalDocRef);
-            hospitalData = hospitalDocSnap.data();
+          // --- AÑADE ESTOS LOGS PARA DEPURAR ---
+          console.log("Firebase User UID:", firebaseUser.uid);
+          console.log("Custom Claims:", claims);
+          if (!claims.hospitalId) {
+            console.error("¡ERROR! No se encontró hospitalId en los claims.");
+            // ... tu lógica de error
+          } else {
+            console.log("hospitalId encontrado:", claims.hospitalId);
           }
+          // --- FIN DE LOGS ---
+          // Si el usuario no tiene un hospitalId en sus claims, no podemos continuar.
+          if (!claims.hospitalId) {
+            throw new Error(
+              "El usuario no tiene un hospitalId asignado en sus claims."
+            );
+          }
+
+          // --- CAMBIO CLAVE AQUÍ ---
+          // Ahora buscamos el documento del usuario dentro de la subcolección de su hospital.
+          const userDocRef = doc(
+            db,
+            "hospitales_MedicalHand",
+            claims.hospitalId, // Usamos el ID del hospital...
+            "users", // ...para llegar a la subcolección 'users'...
+            firebaseUser.uid // ...y encontrar el documento del usuario.
+          );
+          // --- FIN DEL CAMBIO ---
+
+          const userDocSnap = await getDoc(userDocRef);
+
+          // --- OTRO LOG CRÍTICO ---
+          console.log(
+            "¿Existe el documento del usuario?",
+            userDocSnap.exists()
+          );
+          if (userDocSnap.exists()) {
+            console.log("Datos del usuario en Firestore:", userDocSnap.data());
+          }
+          // --- FIN DE LOG ---
+
+          const firestoreUserData = userDocSnap.data();
+
+          // La lógica para obtener los datos del hospital no cambia.
+          const hospitalDocRef = doc(
+            db,
+            "hospitales_MedicalHand",
+            claims.hospitalId
+          );
+          const hospitalDocSnap = await getDoc(hospitalDocRef);
+          const hospitalData = hospitalDocSnap.data();
+
           const completeUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
             claims: claims,
             fullName: firestoreUserData?.fullName || "Usuario sin nombre",
             hospitalName: hospitalData?.name || "Hospital no asignado",
+            hospitalId: claims.hospitalId,
           };
+
           setUser(completeUser);
         } catch (err) {
           console.error("Error al enriquecer el usuario:", err);
-          setUser(firebaseUser); // Establece el usuario básico si falla
+          // Si algo falla (ej. el documento no se encuentra), cerramos la sesión para evitar un estado inconsistente.
+          await logout();
+          setUser(null);
         }
       } else {
         setUser(null);
       }
 
-      setLoading(false); // Avisa a las rutas que la carga de autenticación terminó
-      // ✅ 4. OCULTA EL LOADER al final de todo el proceso
+      setLoading(false);
       hideLoader();
     });
 
     return () => unsubscribe();
-  }, []); // El array vacío asegura que esto solo se configure una vez
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout }}>

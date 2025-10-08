@@ -212,7 +212,7 @@ function CrearMonitor() {
           }
         >
           <span className="message-icon">
-            {mensaje.includes("Error") ? "⚠️" : "✅"}
+            {mensaje.includes("Error") ? "⚠︎" : "✓"}
           </span>
           <span>{mensaje}</span>
         </div>

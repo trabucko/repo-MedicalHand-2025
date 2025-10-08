@@ -29,6 +29,10 @@ function Login() {
   }, [user, navigate]);
 
   const handleLogin = async (email, password) => {
+    // --- AÑADE ESTA LÍNEA PARA DEPURAR ---
+    console.log("Intentando iniciar sesión con:", { email, password });
+    // ------------------------------------
+
     setError(null);
     setIsLoading(true); // ✅ 2. Activa el estado de carga
     // showLoader(); // Si también quieres un loader global, lo activas aquí
@@ -37,6 +41,7 @@ function Login() {
       await signInWithEmailAndPassword(auth, email, password);
       // El useEffect se encarga de redirigir
     } catch (err) {
+      console.error("Error en el inicio de sesión:", error);
       if (
         err.code === "auth/wrong-password" ||
         err.code === "auth/user-not-found" ||
