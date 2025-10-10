@@ -14,7 +14,7 @@ import {
 
 // IMPORTACIÓN DE COMPONENTES DE VISTA
 import InfoPaciente from "./infoPaciente/infoPaciente";
-import RegistroExpediente from "./registroExpediente/registroExpediente"; // <<--- 1. IMPORTADO
+import RegistroExpediente from "./registroExpediente/registroExpediente";
 import SelectConsultorio from "./selectConsultorio/SelectConsultorio";
 import SelectHorario from "../Solicitudes/SelectConsultorio/SelectHorario/SelectHorario";
 
@@ -28,6 +28,9 @@ import {
   where,
   onSnapshot,
   getDocs,
+  doc,
+  writeBatch,
+  serverTimestamp,
 } from "firebase/firestore";
 
 const Solicitud = () => {
@@ -38,10 +41,11 @@ const Solicitud = () => {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSolicitud, setSelectedSolicitud] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Estado para la carga al crear expediente
 
   // --- Estados para controlar las vistas ---
   const [showInfoPaciente, setShowInfoPaciente] = useState(false);
-  const [showRegistroExpediente, setShowRegistroExpediente] = useState(false); // <<--- 2. NUEVO ESTADO
+  const [showRegistroExpediente, setShowRegistroExpediente] = useState(false);
   const [showGestionar, setShowGestionar] = useState(false);
   const [selectedOffice, setSelectedOffice] = useState(null);
 
@@ -144,8 +148,51 @@ const Solicitud = () => {
   }, [currentUser]);
 
   // --- Funciones Handler para la Interfaz ---
+  const handleCrearExpediente = async (solicitud) => {
+    if (!currentUser || !solicitud) {
+      alert("Error: No se pudo obtener la información necesaria.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Prepara una escritura por lotes
+      const batch = writeBatch(db);
+
+      // 1. CREAR EL NUEVO EXPEDIENTE SOLO CON LOS DATOS SOLICITADOS
+      const expedienteData = {
+        fechadecreacion: serverTimestamp(),
+        fechadeultimaactualizacion: serverTimestamp(),
+        hospitalName: currentUser.hospitalName,
+        id_hospital: currentUser.hospitalId,
+        id_usuario: solicitud.citaCompleta.uid, // ID del paciente
+      };
+
+      // Corregido: Usa la colección "expedientes"
+      const nuevoExpedienteRef = doc(collection(db, "expedientes"));
+      batch.set(nuevoExpedienteRef, expedienteData);
+
+      // 2. ACTUALIZAR LA CITA ORIGINAL
+      const citaRef = doc(db, "citas", solicitud.id);
+      batch.update(citaRef, { requiresFile: false });
+
+      // 3. EJECUTAR AMBAS OPERACIONES
+      await batch.commit();
+
+      alert("¡Expediente creado y solicitud actualizada con éxito!");
+      handleCloseRegistroExpediente(); // Cierra la ventana modal
+    } catch (error) {
+      console.error("Error al crear el expediente:", error);
+      alert(
+        "Hubo un error al intentar crear el expediente. Por favor, inténtalo de nuevo."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSolicitudClick = (solicitud) => {
-    // <<--- 3. NUEVA FUNCIÓN CLICK
     setSelectedSolicitud(solicitud);
     if (solicitud.requiresFile) {
       setShowRegistroExpediente(true);
@@ -160,7 +207,6 @@ const Solicitud = () => {
   };
 
   const handleCloseRegistroExpediente = () => {
-    // <<--- 4. NUEVA FUNCIÓN CLOSE
     setShowRegistroExpediente(false);
     setSelectedSolicitud(null);
   };
@@ -217,11 +263,12 @@ const Solicitud = () => {
 
   // --- LÓGICA DE RENDERIZADO CONDICIONAL ---
   if (showRegistroExpediente) {
-    // <<--- 5. NUEVO BLOQUE DE RENDERIZADO
     return (
       <RegistroExpediente
         solicitud={selectedSolicitud}
         onClose={handleCloseRegistroExpediente}
+        onCrearExpediente={handleCrearExpediente}
+        isSubmitting={isSubmitting}
       />
     );
   }
@@ -307,7 +354,7 @@ const Solicitud = () => {
                 <div
                   key={solicitud.id}
                   className="solicitud-item"
-                  onClick={() => handleSolicitudClick(solicitud)} // <<--- 6. ONCLICK ACTUALIZADO
+                  onClick={() => handleSolicitudClick(solicitud)}
                 >
                   <div className="item-main">
                     <div className="patient-section">

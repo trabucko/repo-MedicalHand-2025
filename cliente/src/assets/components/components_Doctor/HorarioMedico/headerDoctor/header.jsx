@@ -12,18 +12,12 @@ import {
   FaSignOutAlt,
   FaTimes,
 } from "react-icons/fa";
-import { doc, updateDoc } from "firebase/firestore";
+// Los imports de Firestore ya no son necesarios aquí
 import "./Header.css";
 import MenuHamburguer from "../../../menu_hamburguesa/menu";
 
-const Header = ({
-  user,
-  toggleSidebar,
-  consultorio,
-  db,
-  hospitalId,
-  onConsultorioChange,
-}) => {
+// Se simplifican las props. La más importante es 'onRelease'.
+const Header = ({ user, toggleSidebar, consultorio, onRelease }) => {
   const [showModal, setShowModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -37,49 +31,25 @@ const Header = ({
     setShowModal(false);
   };
 
+  // Función corregida: Llama a la prop 'onRelease' del componente padre
   const handleLeaveConsultorio = async () => {
-    if (!consultorio || !consultorio.id || !db || !hospitalId) {
-      console.error(
-        "Error: Faltan datos para procesar la salida del consultorio."
-      );
-      return;
-    }
-
     setIsUpdating(true);
-
-    const consultorioRef = doc(
-      db,
-      "hospitales_MedicalHand",
-      hospitalId,
-      "dr_office",
-      consultorio.id
-    );
-
     try {
-      await updateDoc(consultorioRef, {
-        status: "disponible",
-        assignedDoctorId: null,
-        assignedDoctorName: null,
-      });
-
-      console.log("El consultorio ha sido liberado exitosamente.");
-
-      if (onConsultorioChange) {
-        onConsultorioChange(null);
+      if (onRelease) {
+        await onRelease(); // El componente padre se encarga de la lógica de Firestore
       }
     } catch (error) {
-      console.error("Error al actualizar el estado del consultorio:", error);
+      console.error("Error al intentar liberar el consultorio:", error);
+      alert("No se pudo liberar el consultorio. Intente de nuevo.");
     } finally {
       setIsUpdating(false);
       setShowModal(false);
     }
   };
 
-  const handleChangeConsultorio = () => {
-    if (onConsultorioChange) {
-      onConsultorioChange(null);
-    }
-    setShowModal(false);
+  // Función corregida: Para cambiar, primero se debe liberar el actual
+  const handleChangeConsultorio = async () => {
+    await handleLeaveConsultorio();
   };
 
   return (

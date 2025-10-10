@@ -1,5 +1,4 @@
 // src/assets/components/components_Doctor/Doctor_Layout/Doctor_Layout.jsx
-
 import { useState, useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import {
@@ -177,8 +176,7 @@ const DoctorLayout = () => {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [releaseOnLogout, setReleaseOnLogout] = useState(true); // Estado para el checkbox
-
+  const [releaseOnLogout, setReleaseOnLogout] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
   useEffect(() => {
@@ -214,8 +212,16 @@ const DoctorLayout = () => {
     return () => unsubscribe();
   }, [user?.uid, user.hospitalId]);
 
+  // <-- FUNCIÓN MODIFICADA CON DEPURACIÓN -->
+  // Reemplaza tu función handleSelectConsultorio con esta:
   const handleSelectConsultorio = async (consultorio) => {
-    if (!consultorio || !user) return;
+    alert("PASO 1: ¡LA FUNCIÓN SÍ SE ESTÁ EJECUTANDO!"); // <-- PRUEBA DEFINITIVA
+
+    if (!consultorio || !user) {
+      alert("ERROR: Faltan datos de consultorio o usuario.");
+      return;
+    }
+
     const batch = writeBatch(db);
     const consultorioRef = doc(
       db,
@@ -224,6 +230,14 @@ const DoctorLayout = () => {
       "dr_office",
       consultorio.id
     );
+    const userDocRef = doc(
+      db,
+      "hospitales_MedicalHand",
+      user.hospitalId,
+      "users",
+      user.uid
+    );
+
     try {
       batch.update(consultorioRef, {
         status: "ocupado",
@@ -231,18 +245,31 @@ const DoctorLayout = () => {
         assignedDoctorName: user.fullName,
         lastAssignment: serverTimestamp(),
       });
+      batch.update(userDocRef, {
+        assignedOfficeId: consultorio.id,
+        assignedOfficeName: consultorio.name,
+      });
+
       await batch.commit();
+      alert(
+        "PASO 2: ¡ÉXITO! Los datos se intentaron guardar en la base de datos."
+      );
       setSelectedConsultorio(consultorio);
     } catch (error) {
-      console.error("Error al seleccionar el consultorio:", error);
+      alert("PASO 2: ¡ERROR! Hubo un problema al intentar guardar los datos.");
+      console.error("Error en batch.commit:", error);
     }
   };
 
   const handleReleaseConsultorio = async () => {
     if (!selectedConsultorio || !user) return;
+
     const consultorioToRelease = selectedConsultorio;
-    setSelectedConsultorio(null);
+    setSelectedConsultorio(null); // Actualiza el estado localmente primero para una UI más rápida
+
     const batch = writeBatch(db);
+
+    // 1. Referencia al consultorio
     const consultorioRef = doc(
       db,
       "hospitales_MedicalHand",
@@ -250,17 +277,36 @@ const DoctorLayout = () => {
       "dr_office",
       consultorioToRelease.id
     );
+
+    // 2. Referencia al documento del doctor
+    const userDocRef = doc(
+      // <-- AÑADIDO
+      db,
+      "hospitales_MedicalHand",
+      user.hospitalId,
+      "users",
+      user.uid
+    );
+
     try {
+      // Libera el consultorio
       batch.update(consultorioRef, {
         status: "disponible",
         assignedDoctorId: null,
         assignedDoctorName: null,
-        lastAssignment: serverTimestamp(),
       });
+
+      // Limpia la asignación en el documento del doctor
+      batch.update(userDocRef, {
+        // <-- AÑADIDO
+        assignedOfficeId: null,
+        assignedOfficeName: null,
+      });
+
       await batch.commit();
     } catch (error) {
       console.error("Error al liberar el consultorio:", error);
-      setSelectedConsultorio(consultorioToRelease);
+      setSelectedConsultorio(consultorioToRelease); // Revertir si hay error
     }
   };
 

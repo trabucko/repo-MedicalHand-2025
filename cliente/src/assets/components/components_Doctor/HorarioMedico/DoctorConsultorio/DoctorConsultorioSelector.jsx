@@ -1,10 +1,36 @@
-// src/components/components_Doctor/DoctorConsultorioSelector.jsx
 import React from "react";
 import "./DoctorConsultorioSelector.css";
 import { FaHospital, FaUserDoctor } from "react-icons/fa6";
-import { FaSignInAlt } from "react-icons/fa"; // Importar desde react-icons/fa en lugar de fa6
+import { FaSignInAlt } from "react-icons/fa";
 
 const DoctorConsultorioSelector = ({ consultorios, onSelect }) => {
+  // <-- FUNCIÓN AÑADIDA PARA DEPURACIÓN -->
+  const handleCardClick = (consultorio) => {
+    console.log("--- 🩺 Depuración: Intento de Selección de Consultorio ---");
+    console.log(
+      "1. Se hizo clic en la tarjeta para el consultorio:",
+      consultorio.name
+    );
+    console.log("2. ID del consultorio seleccionado:", consultorio.id);
+    console.log("3. Datos completos del objeto 'consultorio':", consultorio);
+
+    // Revisa el estado de asignación actual del consultorio
+    if (consultorio.assignedDoctorId) {
+      console.log(
+        "4. Estado actual: El consultorio ya está asignado a un doctor (Probablemente tú). UID:",
+        consultorio.assignedDoctorId
+      );
+    } else {
+      console.log("4. Estado actual: El consultorio está libre y disponible.");
+    }
+
+    console.log(
+      "5. ✅ Procediendo a llamar a la función 'onSelect' para ejecutar la lógica de asignación..."
+    );
+    onSelect(consultorio);
+    console.log("--- Fin de la Depuración ---");
+  };
+
   return (
     <div className="dcs-container">
       <div className="dcs-header">
@@ -36,7 +62,8 @@ const DoctorConsultorioSelector = ({ consultorios, onSelect }) => {
             <div
               key={cons.id}
               className="dcs-card"
-              onClick={() => onSelect(cons)}
+              // <-- ONCLICK MODIFICADO PARA USAR LA FUNCIÓN DE DEPURACIÓN -->
+              onClick={() => handleCardClick(cons)}
             >
               <div className="dcs-card-header">
                 <div className="dcs-card-icon">

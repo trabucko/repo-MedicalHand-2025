@@ -1,6 +1,7 @@
 // src/assets/components/components_Doctor/paciente/pacientes.jsx
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useAuth } from "../../../context/AuthContext"; // Ajusta esta ruta si es necesario
 import { useParams } from "react-router-dom";
 import {
   doc,
@@ -16,7 +17,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../../firebase";
 import Swal from "sweetalert2";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // <-- MODIFICA ESTA LÍNEA
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import PacienteForm from "./PacienteForm/pacienteForm";
 import { CircularProgress, Typography } from "@mui/material";
@@ -31,7 +32,6 @@ const calcularEdad = (dateOfBirth) => {
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-
   return age.toString();
 };
 
@@ -44,43 +44,49 @@ const Paciente = () => {
   const [loading, setLoading] = useState(true);
   const [doctor, setDoctor] = useState(null);
 
-  //estado del usuario
+  const { user: currentUser } = useAuth();
+
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // El usuario está autenticado, ahora buscamos su perfil con una consulta
-        const collectionRef = collection(db, "usuarios_hospitales"); // Ojo: si es otra colección, cambia el nombre aquí
-
-        // Creamos la consulta: "busca en 'usuarios_movil' donde el campo 'uid' sea igual al uid del usuario"
-        const q = query(collectionRef, where("uid", "==", user.uid));
-
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const doctorDoc = querySnapshot.docs[0];
-          const doctorProfile = doctorDoc.data();
-
-          // 👇 AÑADE ESTA LÍNEA DEBAJO PARA VER LOS DATOS EN LA CONSOLA 👇
-          console.log("Perfil del doctor encontrado:", doctorProfile);
-
-          // ...guardamos la información correcta en el estado
-          setDoctor({
-            uid: user.uid,
-            email: user.email,
-            firstName: doctorProfile.firstName,
-            lastName: doctorProfile.lastName,
-          });
-        } else {
-          // Si la consulta no encuentra nada
-          console.error(
-            "No se encontró un perfil en Firestore para el UID:",
+      if (user && currentUser?.hospitalId) {
+        try {
+          const doctorRef = doc(
+            db,
+            "hospitales_MedicalHand",
+            currentUser.hospitalId,
+            "users",
             user.uid
           );
-          setDoctor({
-            uid: user.uid,
-            email: user.email,
-          });
+          const doctorSnap = await getDoc(doctorRef);
+
+          if (doctorSnap.exists()) {
+            const doctorProfile = doctorSnap.data();
+            console.log("Perfil del doctor encontrado:", doctorProfile);
+
+            setDoctor({
+              uid: user.uid,
+              email: user.email,
+              firstName: doctorProfile.firstName,
+              lastName: doctorProfile.lastName,
+              hospitalId: currentUser.hospitalId,
+              // ✅ CAMBIO CLAVE: Se usa el nombre de campo correcto 'assignedOfficeId'
+              drOfficeId: doctorProfile.assignedOfficeId,
+            });
+          } else {
+            console.error(
+              "No se encontró un perfil de doctor en la ruta:",
+              doctorRef.path
+            );
+            setDoctor({
+              uid: user.uid,
+              email: user.email,
+              hospitalId: currentUser.hospitalId,
+            });
+          }
+        } catch (error) {
+          console.error("Error al obtener el perfil del doctor:", error);
+          setDoctor(null);
         }
       } else {
         setDoctor(null);
@@ -88,12 +94,10 @@ const Paciente = () => {
     });
 
     return () => unsubscribe();
-  }, []); // El array vacío asegura que esto solo se ejecute una vez
+  }, [currentUser]);
 
-  // --- LÓGICA DE DATOS ---
   useEffect(() => {
     if (!patientId) return;
-
     const fetchPatientData = async () => {
       setLoading(true);
       try {
@@ -144,24 +148,17 @@ const Paciente = () => {
         );
         const q = query(consultasRef, orderBy("fechaConsulta", "asc"));
         const consultaSnap = await getDocs(q);
-
         let historialExamenes = [];
         let historialNotas = [];
 
         if (!consultaSnap.empty) {
           consultaSnap.docs.forEach((doc) => {
             const consulta = doc.data();
-
-            // ✅ **CAMBIO CLAVE AQUÍ**
-            // Hacemos el código robusto: buscamos el campo nuevo (`examsRequested`)
-            // O el campo antiguo (`examenesSolicitados`) para compatibilidad.
             const exams =
               consulta.examsRequested || consulta.examenesSolicitados;
             if (Array.isArray(exams)) {
               historialExamenes.push(...exams);
             }
-
-            // Hacemos lo mismo para las notas por si acaso
             const notes = consulta.notes || consulta.notas;
             if (Array.isArray(notes)) {
               historialNotas.push(...notes);
@@ -180,19 +177,16 @@ const Paciente = () => {
         setLoading(false);
       }
     };
-
     fetchPatientData();
   }, [patientId]);
 
   const displayData = useMemo(() => {
     if (!pacienteData) return null;
-
     const uniqueById = (arr) => [
       ...new Map(
         arr.map((item) => item && item.id && [item.id, item])
       ).values(),
     ];
-
     const todosLosExamenes = uniqueById([
       ...historial.exams,
       ...pacienteData.examsRequested,
@@ -201,7 +195,6 @@ const Paciente = () => {
       ...historial.notes,
       ...pacienteData.notes,
     ]);
-
     return {
       ...pacienteData,
       examsRequested: todosLosExamenes.sort(
@@ -225,15 +218,21 @@ const Paciente = () => {
     if (isSaving) return;
     setIsSaving(true);
     Swal.fire({
-      title: "Guardando...",
+      title: "Guardando consulta...",
       allowOutsideClick: false,
       didOpen: () => Swal.showLoading(),
     });
 
     try {
-      const consultaRef = collection(db, "expedientes", patientId, "consultas");
+      const consultaRef = collection(db, "consultas");
       const consultaData = {
         fechaConsulta: Timestamp.fromDate(new Date()),
+        hospital_id: doctor?.hospitalId || "N/A",
+        patient_uid: patientId,
+        doctor_uid: doctor?.uid || "N/A",
+        doctor_name: `${doctor?.firstName || ""} ${
+          doctor?.lastName || ""
+        }`.trim(),
         motivoConsulta: pacienteData.motivoConsulta,
         descripcionSintomas: pacienteData.descripcionSintomas,
         tiempoEnfermedad: pacienteData.tiempoEnfermedad,
@@ -257,10 +256,54 @@ const Paciente = () => {
       };
       await updateDoc(patientRef, infoBaseData);
 
-      Swal.fire("Guardado", "La consulta ha sido registrada.", "success");
+      if (doctor?.hospitalId && doctor?.drOfficeId) {
+        const appointmentsRef = collection(
+          db,
+          "hospitales_MedicalHand",
+          doctor.hospitalId,
+          "dr_office",
+          doctor.drOfficeId,
+          "appointments"
+        );
+        const q = query(
+          appointmentsRef,
+          where("patientUid", "==", patientId),
+          where("status", "==", "confirmada")
+        );
+        const appointmentSnapshot = await getDocs(q);
+
+        if (!appointmentSnapshot.empty) {
+          const updatePromises = appointmentSnapshot.docs.map(
+            (appointmentDoc) =>
+              updateDoc(appointmentDoc.ref, { status: "finalizada" })
+          );
+          await Promise.all(updatePromises);
+          console.log(
+            `${appointmentSnapshot.size} cita(s) actualizada(s) a 'finalizada'.`
+          );
+        } else {
+          console.warn(
+            "No se encontraron citas 'confirmadas' para este paciente."
+          );
+        }
+      } else {
+        console.error(
+          "Faltan datos del doctor (hospitalId, drOfficeId) para actualizar citas."
+        );
+      }
+
+      Swal.fire(
+        "Guardado",
+        "La consulta ha sido registrada y las citas actualizadas.",
+        "success"
+      );
     } catch (error) {
       console.error("Error al guardar:", error);
-      Swal.fire("Error", "Ocurrió un error al guardar.", "error");
+      Swal.fire(
+        "Error",
+        `Ocurrió un error al guardar: ${error.message}`,
+        "error"
+      );
     } finally {
       setIsSaving(false);
     }
@@ -317,19 +360,17 @@ const Paciente = () => {
 
   const agregarNota = useCallback(() => {
     if (!pacienteData.nuevaNotaTexto?.trim()) return;
-
-    // Construye el nombre completo del doctor, con opciones de respaldo
     const autorNota =
       doctor?.firstName && doctor?.lastName
         ? `${doctor.firstName} ${doctor.lastName}`
-        : doctor?.email || "Médico"; // Si no hay nombre, usa el email, y si no, "Médico"
+        : doctor?.email || "Médico";
 
     const nuevaNota = {
       id: `nota_${Date.now()}`,
       texto: pacienteData.nuevaNotaTexto,
       tipo: pacienteData.nuevaNotaTipo || "comun",
       fecha: new Date().toISOString(),
-      autor: autorNota, // <-- Aquí va el nombre completo
+      autor: autorNota,
     };
 
     setPacienteData((prev) => ({
@@ -347,7 +388,6 @@ const Paciente = () => {
     }));
   }, []);
 
-  // --- RENDERIZADO ---
   if (loading) {
     return (
       <div

@@ -20,7 +20,13 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 
-const RegistroExpediente = ({ solicitud, onClose }) => {
+// 1. RECIBIMOS LAS NUEVAS PROPS
+const RegistroExpediente = ({
+  solicitud,
+  onClose,
+  onCrearExpediente,
+  isSubmitting,
+}) => {
   const { pacienteCompleto } = solicitud;
   const [selectedImage, setSelectedImage] = useState(null);
 
@@ -67,6 +73,13 @@ const RegistroExpediente = ({ solicitud, onClose }) => {
     </div>
   );
 
+  // 2. FUNCIÓN HANDLER QUE LLAMA A LA PROP
+  const handleSubmit = () => {
+    if (onCrearExpediente) {
+      onCrearExpediente(solicitud);
+    }
+  };
+
   return (
     <div className="registro-container">
       {/* Modal para imágenes */}
@@ -91,11 +104,21 @@ const RegistroExpediente = ({ solicitud, onClose }) => {
           </div>
         </div>
         <div className="header-actions">
-          <button onClick={onClose} className="btn-secondary">
+          <button
+            onClick={onClose}
+            className="btn-secondary"
+            disabled={isSubmitting}
+          >
             <FaTimes /> Cancelar
           </button>
-          <button className="btn-primary">
-            <FaFileMedicalAlt /> Crear Expediente
+          {/* 3. BOTÓN ACTUALIZADO */}
+          <button
+            onClick={handleSubmit}
+            className="btn-primary"
+            disabled={isSubmitting}
+          >
+            <FaFileMedicalAlt />
+            {isSubmitting ? "Creando..." : "Crear Expediente"}
           </button>
         </div>
       </div>
