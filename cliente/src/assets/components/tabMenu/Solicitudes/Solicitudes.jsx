@@ -4,18 +4,17 @@ import React, { useState, useEffect } from "react";
 import "./Solicitudes.css";
 import {
   FaUserMd,
-  FaFilter,
-  FaTimes,
-  FaSearch,
   FaCalendarAlt,
   FaStethoscope,
   FaClock,
   FaArrowRight,
-  FaExclamationCircle,
+  FaIdCard,
+  FaPhone,
 } from "react-icons/fa";
 
 // IMPORTACIÓN DE COMPONENTES DE VISTA
 import InfoPaciente from "./infoPaciente/infoPaciente";
+import RegistroExpediente from "./registroExpediente/registroExpediente"; // <<--- 1. IMPORTADO
 import SelectConsultorio from "./selectConsultorio/SelectConsultorio";
 import SelectHorario from "../Solicitudes/SelectConsultorio/SelectHorario/SelectHorario";
 
@@ -33,9 +32,7 @@ import {
 
 const Solicitud = () => {
   const authData = useAuth();
-  console.log("Datos COMPLETOS recibidos de useAuth():", authData);
   const { user: currentUser } = authData;
-  // ▲▲▲ FIN DE LÍNEAS DE DEPURACIÓN ▲▲▲
 
   // --- Estados de datos y UI ---
   const [solicitudes, setSolicitudes] = useState([]);
@@ -44,66 +41,102 @@ const Solicitud = () => {
 
   // --- Estados para controlar las vistas ---
   const [showInfoPaciente, setShowInfoPaciente] = useState(false);
+  const [showRegistroExpediente, setShowRegistroExpediente] = useState(false); // <<--- 2. NUEVO ESTADO
   const [showGestionar, setShowGestionar] = useState(false);
   const [selectedOffice, setSelectedOffice] = useState(null);
 
-  // --- Estados para filtros y ordenación ---
-  const [showModal, setShowModal] = useState(false);
-  const [activeFilters, setActiveFilters] = useState({});
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortOption, setSortOption] = useState("más-reciente");
-
   useEffect(() => {
-    // Si currentUser todavía no está cargado, no hacemos nada.
     if (!currentUser) {
       return;
     }
 
-    console.log("Iniciando useEffect para buscar solicitudes...");
+    console.log("Iniciando carga de solicitudes...");
     const citasRef = collection(db, "citas");
     const q = query(citasRef, where("status", "==", "pendiente"));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       if (snapshot.empty) {
+        console.log("No se encontraron solicitudes pendientes.");
         setLoading(false);
         setSolicitudes([]);
         return;
       }
 
+      console.log(`Se encontraron ${snapshot.docs.length} solicitudes.`);
+
       const solicitudesPromises = snapshot.docs.map(async (doc) => {
-        const citaData = doc.data();
-        let pacienteData = {};
+        // ▼▼▼ BLOQUE DE DEPURACIÓN PARA CADA SOLICITUD ▼▼▼
+        try {
+          const citaData = doc.data();
+          console.log("✅ 1. Datos de la CITA crudos:", citaData);
 
-        if (citaData.uid) {
-          const usersRef = collection(db, "usuarios_movil");
-          const userQuery = query(usersRef, where("uid", "==", citaData.uid));
-          const userSnapshot = await getDocs(userQuery);
-          if (!userSnapshot.empty) {
-            pacienteData = userSnapshot.docs[0].data();
+          let pacienteData = {};
+          if (citaData.uid) {
+            const usersRef = collection(db, "usuarios_movil");
+            const userQuery = query(usersRef, where("uid", "==", citaData.uid));
+            const userSnapshot = await getDocs(userQuery);
+            if (!userSnapshot.empty) {
+              pacienteData = userSnapshot.docs[0].data();
+            }
           }
-        }
+          console.log("✅ 2. Datos del PACIENTE encontrados:", pacienteData);
 
-        return {
-          id: doc.id,
-          paciente: pacienteData.personalInfo?.firstName
-            ? `${pacienteData.personalInfo.firstName} ${pacienteData.personalInfo.lastName}`
-            : citaData.fullName || "Paciente sin nombre",
-          fecha: citaData.requestTimestamp.toDate().toLocaleDateString("es-ES"),
-          hora: citaData.requestTimestamp.toDate().toLocaleTimeString("es-ES", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          motivo: citaData.reason,
-          estado: "Pendiente",
-          prioridad: citaData.priority || "normal",
-          especialidad: citaData.specialty,
-          citaCompleta: { ...citaData, id: doc.id },
-          pacienteCompleto: pacienteData,
-        };
+          const telefono =
+            pacienteData.personalInfo?.phone ||
+            pacienteData.phone ||
+            pacienteData.telefono ||
+            citaData.phone ||
+            citaData.telefono ||
+            citaData.phoneNumber ||
+            "No disponible";
+
+          // Creamos el objeto final en una variable para poder inspeccionarlo
+          const solicitudProcesada = {
+            id: doc.id,
+            paciente: pacienteData.personalInfo?.firstName
+              ? `${pacienteData.personalInfo.firstName} ${pacienteData.personalInfo.lastName}`
+              : citaData.fullName || "Paciente sin nombre",
+            fecha: citaData.requestTimestamp
+              .toDate()
+              .toLocaleDateString("es-ES"),
+            hora: citaData.requestTimestamp
+              .toDate()
+              .toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            motivo: citaData.reason,
+            estado: "Pendiente",
+            prioridad: citaData.priority || "normal",
+            especialidad: citaData.specialty,
+            citaCompleta: { ...citaData, id: doc.id },
+            pacienteCompleto: pacienteData,
+            telefono: telefono,
+            detallePaciente: citaData.requiresFile
+              ? "Requiere apertura de expediente" // Mensaje si necesita archivo
+              : pacienteData.personalInfo?.age
+              ? `${pacienteData.personalInfo.age} años` // Muestra la edad si la tenemos
+              : "Paciente registrado", // Mensaje si NO necesita archivo y no hay edad
+
+            requiresFile: citaData.requiresFile === true,
+          };
+
+          console.log("✅ 3. Objeto FINAL a mostrar:", solicitudProcesada);
+          return solicitudProcesada;
+        } catch (error) {
+          console.error(
+            "❌ ¡ERROR! No se pudo procesar la solicitud con ID:",
+            doc.id,
+            error
+          );
+          return null; // Devolvemos null para que no rompa el resto
+        }
+        // ▲▲▲ FIN DEL BLOQUE DE DEPURACIÓN ▲▲▲
       });
 
       const solicitudesCompletas = await Promise.all(solicitudesPromises);
-      setSolicitudes(solicitudesCompletas);
+      // Filtramos los posibles nulos si hubo errores
+      setSolicitudes(solicitudesCompletas.filter((s) => s !== null));
       setLoading(false);
     });
 
@@ -111,13 +144,24 @@ const Solicitud = () => {
   }, [currentUser]);
 
   // --- Funciones Handler para la Interfaz ---
-  const handleOpenInfoPaciente = (solicitud) => {
+  const handleSolicitudClick = (solicitud) => {
+    // <<--- 3. NUEVA FUNCIÓN CLICK
     setSelectedSolicitud(solicitud);
-    setShowInfoPaciente(true);
+    if (solicitud.requiresFile) {
+      setShowRegistroExpediente(true);
+    } else {
+      setShowInfoPaciente(true);
+    }
   };
 
   const handleCloseInfoPaciente = () => {
     setShowInfoPaciente(false);
+    setSelectedSolicitud(null);
+  };
+
+  const handleCloseRegistroExpediente = () => {
+    // <<--- 4. NUEVA FUNCIÓN CLOSE
+    setShowRegistroExpediente(false);
     setSelectedSolicitud(null);
   };
 
@@ -143,21 +187,6 @@ const Solicitud = () => {
     setShowGestionar(true);
   };
 
-  const toggleModal = () => setShowModal(!showModal);
-
-  const clearFilter = (filterType) => {
-    setActiveFilters((prev) => {
-      const newFilters = { ...prev };
-      delete newFilters[filterType];
-      return newFilters;
-    });
-  };
-
-  const clearAllFilters = () => {
-    setActiveFilters({});
-    setSearchTerm("");
-  };
-
   // ===================================================================
   // ▼▼▼ BARRERA DE CARGA ▼▼▼
   if (!currentUser || !currentUser.hospitalId) {
@@ -165,53 +194,12 @@ const Solicitud = () => {
       <div className="content-area">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <h2 className="solicitudes-title">Verificando usuario...</h2>
+          <h2 className="solicitudes-title">Verificando credenciales...</h2>
         </div>
       </div>
     );
   }
   // ===================================================================
-
-  // Lógica de filtrado y ordenación
-  const filteredAndSortedSolicitudes = solicitudes
-    .filter((sol) => {
-      const searchTermLower = searchTerm.toLowerCase();
-      const matchesSearchTerm =
-        (sol.paciente || "").toLowerCase().includes(searchTermLower) ||
-        (sol.motivo || "").toLowerCase().includes(searchTermLower) ||
-        (sol.especialidad || "").toLowerCase().includes(searchTermLower);
-
-      if (
-        activeFilters.especialidad &&
-        sol.especialidad !== activeFilters.especialidad
-      ) {
-        return false;
-      }
-
-      if (
-        activeFilters.prioridad &&
-        sol.prioridad !== activeFilters.prioridad
-      ) {
-        return false;
-      }
-
-      return matchesSearchTerm;
-    })
-    .sort((a, b) => {
-      if (sortOption === "más-reciente") {
-        const dateA = new Date(a.fecha.split("/").reverse().join("-"));
-        const dateB = new Date(b.fecha.split("/").reverse().join("-"));
-        return dateB - dateA;
-      }
-      if (sortOption === "especialidad") {
-        return a.especialidad.localeCompare(b.especialidad);
-      }
-      if (sortOption === "prioridad") {
-        const priorityOrder = { alta: 3, media: 2, normal: 1 };
-        return priorityOrder[b.prioridad] - priorityOrder[a.prioridad];
-      }
-      return 0;
-    });
 
   if (loading) {
     return (
@@ -228,6 +216,16 @@ const Solicitud = () => {
   }
 
   // --- LÓGICA DE RENDERIZADO CONDICIONAL ---
+  if (showRegistroExpediente) {
+    // <<--- 5. NUEVO BLOQUE DE RENDERIZADO
+    return (
+      <RegistroExpediente
+        solicitud={selectedSolicitud}
+        onClose={handleCloseRegistroExpediente}
+      />
+    );
+  }
+
   if (selectedSolicitud && selectedOffice) {
     const doctorInfo = {
       nombre: selectedOffice.consultorio.assignedDoctorName,
@@ -235,7 +233,7 @@ const Solicitud = () => {
 
     return (
       <SelectHorario
-        hospitalId={currentUser.hospitalId} // <-- AÑADE ESTA LÍNEA
+        hospitalId={currentUser.hospitalId}
         consultorio={selectedOffice.consultorio}
         doctor={doctorInfo}
         appointmentRequest={selectedSolicitud.citaCompleta}
@@ -248,7 +246,6 @@ const Solicitud = () => {
   if (showGestionar) {
     return (
       <SelectConsultorio
-        // ▼▼▼ CAMBIO CLAVE AQUÍ ▼▼▼
         hospitalId={currentUser.hospitalId}
         onClose={handleCloseGestionar}
         onSelectOffice={handleSelectOffice}
@@ -270,183 +267,95 @@ const Solicitud = () => {
   // Vista PRINCIPAL (lista de solicitudes)
   return (
     <div className="content-area">
-      {/* Header limpio y profesional */}
+      {/* Header minimalista */}
       <div className="page-header">
         <div className="header-content">
           <div className="header-title-section">
             <h1 className="solicitudes-title">Solicitudes de Consulta</h1>
             <p className="solicitudes-subtitle">
-              Gestión de solicitudes médicas pendientes
+              {currentUser.hospitalName} - Panel de gestión
             </p>
           </div>
-          <div className="header-info">
-            <div className="info-item">
-              <span className="info-label">Total:</span>
-              <span className="info-value">{solicitudes.length}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Pendientes:</span>
-              <span className="info-value">{solicitudes.length}</span>
-            </div>
-          </div>
         </div>
       </div>
-
-      {/* Barra de herramientas minimalista */}
-      <div className="control-panel">
-        <div className="search-panel">
-          <div className="search-field">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Buscar por paciente, motivo o especialidad..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-            {searchTerm && (
-              <button
-                className="clear-search"
-                onClick={() => setSearchTerm("")}
-                title="Limpiar búsqueda"
-              >
-                <FaTimes />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="action-panel">
-          <div className="sort-control">
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              className="sort-select"
-            >
-              <option value="más-reciente">Más reciente</option>
-              <option value="especialidad">Especialidad</option>
-              <option value="prioridad">Prioridad</option>
-            </select>
-          </div>
-
-          <button className="filter-button" onClick={toggleModal}>
-            <FaFilter />
-            Filtros
-          </button>
-        </div>
-      </div>
-
-      {/* Indicadores de filtros activos */}
-      {(Object.keys(activeFilters).length > 0 || searchTerm) && (
-        <div className="filters-indicator">
-          <div className="filters-content">
-            <span className="filters-title">Filtros aplicados:</span>
-            <div className="active-filters">
-              {searchTerm && (
-                <div className="filter-tag">
-                  <span>"{searchTerm}"</span>
-                  <button onClick={() => setSearchTerm("")}>
-                    <FaTimes />
-                  </button>
-                </div>
-              )}
-              {activeFilters.especialidad && (
-                <div className="filter-tag">
-                  <span>Especialidad: {activeFilters.especialidad}</span>
-                  <button onClick={() => clearFilter("especialidad")}>
-                    <FaTimes />
-                  </button>
-                </div>
-              )}
-              {activeFilters.prioridad && (
-                <div className="filter-tag">
-                  <span>Prioridad: {activeFilters.prioridad}</span>
-                  <button onClick={() => clearFilter("prioridad")}>
-                    <FaTimes />
-                  </button>
-                </div>
-              )}
-              <button className="clear-filters" onClick={clearAllFilters}>
-                Limpiar todos
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Contenido principal */}
       <div className="main-content">
-        {filteredAndSortedSolicitudes.length === 0 ? (
+        {solicitudes.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">
-              {solicitudes.length === 0 ? <FaUserMd /> : <FaSearch />}
+              <FaUserMd />
             </div>
-            <h3>
-              {solicitudes.length === 0
-                ? "No hay solicitudes pendientes"
-                : "No se encontraron resultados"}
-            </h3>
+            <h3>No hay solicitudes pendientes</h3>
             <p>
-              {solicitudes.length === 0
-                ? "No se han encontrado solicitudes de consulta en el sistema."
-                : "Modifique los criterios de búsqueda o filtros aplicados."}
+              No se han encontrado solicitudes de consulta médica pendientes en
+              el sistema.
             </p>
           </div>
         ) : (
           <div className="solicitudes-container">
             <div className="list-header">
               <span className="results-count">
-                {filteredAndSortedSolicitudes.length} solicitud
-                {filteredAndSortedSolicitudes.length !== 1 ? "es" : ""}{" "}
-                encontrada{filteredAndSortedSolicitudes.length !== 1 ? "s" : ""}
+                {solicitudes.length} solicitud
+                {solicitudes.length !== 1 ? "es" : ""} pendiente
+                {solicitudes.length !== 1 ? "s" : ""}
               </span>
             </div>
 
             <div className="solicitudes-list">
-              {filteredAndSortedSolicitudes.map((solicitud) => (
+              {solicitudes.map((solicitud) => (
                 <div
                   key={solicitud.id}
                   className="solicitud-item"
-                  onClick={() => handleOpenInfoPaciente(solicitud)}
+                  onClick={() => handleSolicitudClick(solicitud)} // <<--- 6. ONCLICK ACTUALIZADO
                 >
                   <div className="item-main">
                     <div className="patient-section">
                       <div className="patient-info">
                         <h3 className="patient-name">{solicitud.paciente}</h3>
-                        <div className="patient-meta">
-                          <span className="specialty">
-                            {solicitud.especialidad}
+                        <div className="patient-details">
+                          <span
+                            className={`detail ${
+                              solicitud.requiresFile
+                                ? "status-required"
+                                : "status-ok"
+                            }`}
+                          >
+                            <FaIdCard />
+                            {solicitud.detallePaciente}
                           </span>
-                          {solicitud.prioridad === "alta" && (
-                            <span className="priority-high">
-                              <FaExclamationCircle />
-                              Alta prioridad
-                            </span>
-                          )}
+                          <span className="detail">
+                            <FaPhone />
+                            {solicitud.telefono}
+                          </span>
                         </div>
                       </div>
                     </div>
 
                     <div className="request-details">
-                      <p className="motivo">{solicitud.motivo}</p>
-                      <div className="detail-items">
-                        <div className="detail-item">
+                      <div className="medical-info">
+                        <div className="specialty">
+                          <FaStethoscope />
+                          {solicitud.especialidad}
+                        </div>
+                        <div className="request-time">
                           <FaCalendarAlt />
-                          <span>{solicitud.fecha}</span>
-                        </div>
-                        <div className="detail-item">
+                          {solicitud.fecha}
                           <FaClock />
-                          <span>{solicitud.hora}</span>
+                          {solicitud.hora}
                         </div>
+                      </div>
+                      <div className="reason">
+                        <p>{solicitud.motivo}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="item-actions">
-                    <div className="status-indicator">
+                    <div className="status">
                       <span>{solicitud.estado}</span>
                     </div>
-                    <div className="action-indicator">
+                    <div className="action">
                       <FaArrowRight />
                     </div>
                   </div>
@@ -456,70 +365,6 @@ const Solicitud = () => {
           </div>
         )}
       </div>
-
-      {/* Modal de Filtros */}
-      {showModal && (
-        <div className="modal-overlay" onClick={toggleModal}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Filtrar Solicitudes</h2>
-              <button className="modal-close" onClick={toggleModal}>
-                <FaTimes />
-              </button>
-            </div>
-
-            <div className="modal-content">
-              <div className="filter-group">
-                <label htmlFor="especialidad-filter">Especialidad Médica</label>
-                <select
-                  id="especialidad-filter"
-                  value={activeFilters.especialidad || ""}
-                  onChange={(e) =>
-                    setActiveFilters((prev) => ({
-                      ...prev,
-                      especialidad: e.target.value || undefined,
-                    }))
-                  }
-                >
-                  <option value="">Todas las especialidades</option>
-                  <option value="Medicina General">Medicina General</option>
-                  <option value="Pediatría">Pediatría</option>
-                  <option value="Cardiología">Cardiología</option>
-                  <option value="Dermatología">Dermatología</option>
-                </select>
-              </div>
-
-              <div className="filter-group">
-                <label htmlFor="prioridad-filter">Nivel de Prioridad</label>
-                <select
-                  id="prioridad-filter"
-                  value={activeFilters.prioridad || ""}
-                  onChange={(e) =>
-                    setActiveFilters((prev) => ({
-                      ...prev,
-                      prioridad: e.target.value || undefined,
-                    }))
-                  }
-                >
-                  <option value="">Todas las prioridades</option>
-                  <option value="alta">Alta prioridad</option>
-                  <option value="media">Prioridad media</option>
-                  <option value="normal">Prioridad normal</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button className="btn btn-secondary" onClick={clearAllFilters}>
-                Limpiar filtros
-              </button>
-              <button className="btn btn-primary" onClick={toggleModal}>
-                Aplicar filtros
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,0 +1,488 @@
+/* src/assets/components/tabMenu/Solicitudes/registroExpediente/RegistroExpediente.css */
+
+.registro-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  min-height: 100vh;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* Encabezado Mejorado */
+.registro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(13, 59, 101, 0.08);
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.registro-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(180deg, #0d3b65, #1e4f7a);
+}
+
+.header-content {
+  flex: 1;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.header-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0d3b65, #1e4f7a);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(13, 59, 101, 0.2);
+}
+
+.header-text h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.75rem;
+  color: #0d3b65;
+  font-weight: 700;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d3b65, #1e4f7a);
+  color: white;
+  box-shadow: 0 4px 15px rgba(13, 59, 101, 0.2);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(13, 59, 101, 0.3);
+  background: linear-gradient(135deg, #0a2f4d, #1a4568);
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #4a5568;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+.btn-secondary:hover {
+  background: #f7fafc;
+  border-color: #cbd5e0;
+  color: #2d3748;
+}
+
+/* Contenido Principal - DISTRIBUCIÓN SIMPLIFICADA */
+.registro-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  /* Se elimina 'align-items: start' para permitir que las tarjetas se estiren */
+}
+
+.info-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(13, 59, 101, 0.06);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid #f1f5f9;
+  height: 100%; /* <<--- CAMBIO 1: Asegura que todas las tarjetas en una fila tengan la misma altura */
+}
+
+/* <<--- CAMBIO 2: NUEVA REGLA para la tarjeta de ancho completo --- */
+.full-width-card {
+  grid-column: 1 / -1; /* Hace que este elemento ocupe desde la línea 1 hasta la última */
+}
+
+.info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(13, 59, 101, 0.12);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0d3b65;
+}
+
+.card-icon {
+  color: #0d3b65;
+  font-size: 1.1rem;
+}
+
+.card-content {
+  padding: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f7fafc;
+  font-size: 0.95rem;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item label {
+  color: #4a5568;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-item span {
+  color: #1a202c;
+  font-weight: 500;
+  text-align: right;
+}
+
+.info-item.full-width {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* Estilos para información médica */
+.blood-type {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: #ebf8ff;
+  color: #0d3b65;
+  border: 1px solid #bee3f8;
+}
+
+.blood-type.Opos {
+  background: #fed7d7;
+  color: #c53030;
+  border-color: #feb2b2;
+}
+
+.blood-type.Apos {
+  background: #fed7f8;
+  color: #b83280;
+  border-color: #fbb6ce;
+}
+
+.blood-type.Bpos {
+  background: #e9f7ef;
+  color: #276749;
+  border-color: #c6f6d5;
+}
+
+.blood-type.ABpos {
+  background: #faf5ff;
+  color: #6b46c1;
+  border-color: #d6bcfa;
+}
+
+.medical-text {
+  margin: 0;
+  padding: 0.75rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  width: 100%;
+  color: #2d3748;
+  line-height: 1.5;
+  border: 1px solid #e2e8f0;
+}
+
+.diseases-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.disease-tag {
+  background: linear-gradient(135deg, #0d3b65, #1e4f7a);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(13, 59, 101, 0.2);
+}
+
+/* Documentos */
+.documents-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.document-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.document-item label {
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.document-preview {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid #e2e8f0;
+  height: 180px;
+  background: #f8fafc;
+}
+
+.document-preview:hover {
+  transform: translateY(-4px);
+  border-color: #0d3b65;
+  box-shadow: 0 8px 25px rgba(13, 59, 101, 0.15);
+}
+
+.document-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.document-preview:hover .document-image {
+  transform: scale(1.05);
+}
+
+.document-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 59, 101, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.document-preview:hover .document-overlay {
+  opacity: 1;
+}
+
+/* Modal para imágenes */
+.image-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(14, 34, 52, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(13, 59, 101, 0.3);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(13, 59, 101, 0.9);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.modal-close-btn:hover {
+  background: #28425d;
+}
+
+.modal-image {
+  width: 100%;
+  height: auto;
+  max-height: 85vh;
+  object-fit: contain;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .registro-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .documents-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 968px) {
+  .registro-header {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+
+  .header-actions {
+    justify-content: stretch;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    flex: 1;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .registro-container {
+    padding: 1rem;
+  }
+
+  .registro-header {
+    padding: 1.5rem;
+  }
+
+  .header-main {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .header-patient-info {
+    border-left: none;
+    padding-left: 0;
+    margin-left: 0;
+    border-top: 2px solid #e2e8f0;
+    padding-top: 1rem;
+    text-align: center;
+  }
+
+  .patient-details {
+    justify-content: center;
+  }
+
+  .header-actions {
+    flex-direction: column;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .info-item span {
+    text-align: left;
+  }
+}
+
+@media (max-width: 480px) {
+  .registro-container {
+    padding: 0.75rem;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+
+  .document-preview {
+    height: 150px;
+  }
+
+  .card-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .patient-details {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .patient-divider {
+    display: none;
+  }
+}
+
+.full-width-card {
+  grid-column: 1 / -1; /* Ocupa desde la primera hasta la última columna */
+}
