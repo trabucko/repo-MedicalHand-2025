@@ -396,9 +396,7 @@ const DoctorLayout = () => {
             </ModalBody>
             <ModalActions>
               <CancelButton onClick={handleCancelLogout}>Cancelar</CancelButton>
-              <ConfirmButton onClick={handleConfirmLogout}>
-                Sí, salir
-              </ConfirmButton>
+              <ConfirmButton onClick={handleConfirmLogout}>Salir</ConfirmButton>
             </ModalActions>
           </ModalContent>
         </ModalOverlay>
