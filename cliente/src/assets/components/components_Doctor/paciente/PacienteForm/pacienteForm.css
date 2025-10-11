@@ -108,53 +108,86 @@
 
 /* Tabs navigation */
 .px-tabs-container {
-  background: white;
+  background: linear-gradient(135deg, #0d3b65 0%, #1e4a76 100%);
   border-radius: 12px;
   margin-bottom: 1.5rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(13, 59, 101, 0.15);
   overflow: hidden;
-  border: 1px solid #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .px-tabs {
   display: flex;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: transparent;
+  border-bottom: none;
 }
 
 .px-tab {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.5rem;
   border: none;
-  background: none;
-  color: #64748b;
-  font-size: 0.8rem;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
   flex: 1;
   justify-content: center;
   min-width: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .px-tab:hover {
-  color: #0d3b65;
-  background: rgba(13, 59, 101, 0.05);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
 }
 
 .px-tab-active {
-  color: #0d3b65;
-  border-bottom-color: #0d3b65;
-  background: white;
+  color: white;
+  border-bottom-color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+}
+
+.px-tab-active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ffffff, transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .px-tab-icon {
   font-size: 0.9rem;
+  transition: transform 0.2s ease;
 }
 
+.px-tab:hover .px-tab-icon {
+  transform: scale(1.1);
+}
+
+.px-tab-active .px-tab-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 2px 4px rgba(255, 255, 255, 0.3));
+}
 /* Content area */
 .px-content {
   background: white;
@@ -423,6 +456,10 @@
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
   font-weight: 500;
+}
+
+.span_nav {
+  color: white;
 }
 
 .px-btn-remove {
@@ -974,5 +1011,70 @@
 
   .px-file-actions {
     align-self: flex-end;
+  }
+}
+
+/* src/assets/components/components_Doctor/paciente/PacienteForm/pacienteForm.css */
+
+/* ... (mantener todo el CSS existente) ... */
+
+/* Vista Selector */
+.px-vista-selector {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+}
+
+.px-vista-tabs {
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.px-vista-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.px-vista-tab:hover {
+  color: #0d3b65;
+  background: rgba(13, 59, 101, 0.05);
+}
+
+.px-vista-tab-active {
+  color: #0d3b65;
+  border-bottom-color: #0d3b65;
+  background: white;
+}
+
+.px-vista-tab-icon {
+  font-size: 1rem;
+}
+
+/* Responsive para vista selector */
+@media (max-width: 768px) {
+  .px-vista-tabs {
+    flex-direction: column;
+  }
+
+  .px-vista-tab {
+    padding: 0.75rem 1rem;
+    justify-content: flex-start;
   }
 }
