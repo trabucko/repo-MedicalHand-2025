@@ -1,0 +1,655 @@
+/* src/components/Expedientes/expediente.css */
+.expedientes-container-exp {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.expedientes-header-exp {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 30px 0;
+}
+
+.expedientes-titulo-exp {
+  color: #0d3b65;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 15px;
+  letter-spacing: -0.5px;
+}
+
+.expedientes-descripcion-exp {
+  color: #6c757d;
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Barra de búsqueda mejorada */
+.expedientes-busqueda-container-exp {
+  background: #fff;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(13, 59, 101, 0.12);
+  margin-bottom: 30px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid #e1e5e9;
+}
+
+.expedientes-form-busqueda-exp {
+  width: 100%;
+}
+
+.expedientes-search-main-exp {
+  position: relative;
+}
+
+.expedientes-search-input-group-exp {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.expedientes-search-wrapper-exp {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.expedientes-input-busqueda-exp {
+  width: 100%;
+  padding: 16px 20px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  padding-right: 180px;
+}
+
+.expedientes-input-busqueda-exp:focus {
+  outline: none;
+  border-color: #0d3b65;
+  box-shadow: 0 0 0 3px rgba(13, 59, 101, 0.1);
+}
+
+.expedientes-filter-indicator-exp {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expedientes-filter-badge-exp {
+  background: #f8f9fa;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0d3b65;
+  border: 1px solid #e1e5e9;
+}
+
+.expedientes-btn-filters-exp {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+}
+
+.expedientes-btn-filters-exp:hover {
+  background: #f8f9fa;
+}
+
+.expedientes-btn-buscar-exp {
+  background: linear-gradient(135deg, #0d3b65 0%, #1a4f8c 100%);
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.expedientes-btn-buscar-exp:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 59, 101, 0.3);
+}
+
+.expedientes-btn-buscar-exp:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.expedientes-loading-exp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expedientes-spinner-exp {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: expedientes-spin-exp 1s linear infinite;
+}
+
+@keyframes expedientes-spin-exp {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Panel de filtros */
+.expedientes-filters-panel-exp {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 10px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.expedientes-filters-header-exp {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.expedientes-filters-header-exp h4 {
+  color: #0d3b65;
+  margin: 0;
+  font-size: 16px;
+}
+
+.expedientes-btn-close-filters-exp {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+  color: #6c757d;
+}
+
+.expedientes-filters-grid-exp {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.expedientes-filter-option-exp {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.expedientes-filter-option-exp:hover {
+  background: #f8f9fa;
+}
+
+.expedientes-filter-radio-exp {
+  margin: 0;
+}
+
+.expedientes-filter-label-exp {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Acciones de búsqueda */
+.expedientes-search-actions-exp {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #f1f3f4;
+}
+
+.expedientes-btn-limpiar-exp {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.expedientes-btn-limpiar-exp:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+.expedientes-search-stats-exp {
+  font-size: 14px;
+  color: #6c757d;
+}
+
+.expedientes-stat-exp {
+  font-weight: 600;
+}
+
+/* Nuevo diseño para el detalle del paciente */
+.expedientes-detalle-paciente-exp {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(13, 59, 101, 0.15);
+  padding: 0;
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow: hidden;
+  animation: expedientes-slideInUp-exp 0.6s ease;
+}
+
+@keyframes expedientes-slideInUp-exp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.expedientes-detalle-header-exp {
+  background: linear-gradient(135deg, #0d3b65 0%, #1a4f8c 100%);
+  color: white;
+  padding: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.expedientes-paciente-main-info-exp {
+  flex: 1;
+}
+
+.expedientes-detalle-titulo-exp {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.expedientes-paciente-meta-exp {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+.expedientes-cedula-exp {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.expedientes-edad-exp {
+  font-weight: 500;
+}
+
+.expedientes-header-actions-exp {
+  text-align: right;
+}
+
+.expedientes-estado-badge-exp {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.expedientes-estado-activo-exp {
+  background: #28a745;
+  color: white;
+}
+
+.expedientes-estado-inactivo-exp {
+  background: #dc3545;
+  color: white;
+}
+
+.expedientes-ultima-visita-exp {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Grid layout mejorado */
+.expedientes-grid-layout-exp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  background: #f8f9fa;
+}
+
+.expedientes-columna-exp {
+  display: flex;
+  flex-direction: column;
+}
+
+.expedientes-columna-exp:first-child {
+  border-right: 1px solid #e1e5e9;
+}
+
+.expedientes-info-card-exp {
+  background: #fff;
+  padding: 25px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.expedientes-info-card-exp:last-child {
+  border-bottom: none;
+}
+
+.expedientes-card-titulo-exp {
+  color: #0d3b65;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expedientes-info-grid-exp {
+  display: grid;
+  gap: 16px;
+}
+
+.expedientes-info-field-exp {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.expedientes-info-field-exp label {
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expedientes-info-field-exp span {
+  color: #333;
+  font-weight: 500;
+}
+
+.expedientes-sangre-exp {
+  background: #ffe6e6;
+  color: #dc3545;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.expedientes-no-alergias-exp {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.expedientes-si-alergias-exp {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.expedientes-proxima-cita-exp {
+  color: #0d3b65;
+  font-weight: 700;
+  background: #e3f2fd;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.expedientes-medicamentos-exp,
+.expedientes-notas-exp {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #0d3b65;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #555;
+}
+
+/* Botones de acción mejorados */
+.expedientes-acciones-container-exp {
+  background: #fff;
+  padding: 25px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  border-top: 1px solid #e1e5e9;
+}
+
+.expedientes-btn-primary-exp,
+.expedientes-btn-secondary-exp,
+.expedientes-btn-success-exp,
+.expedientes-btn-warning-exp {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.expedientes-btn-primary-exp {
+  background: #0d3b65;
+  color: white;
+}
+
+.expedientes-btn-primary-exp:hover {
+  background: #0a2e4d;
+  transform: translateY(-2px);
+}
+
+.expedientes-btn-secondary-exp {
+  background: #6c757d;
+  color: white;
+}
+
+.expedientes-btn-secondary-exp:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.expedientes-btn-success-exp {
+  background: #28a745;
+  color: white;
+}
+
+.expedientes-btn-success-exp:hover {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.expedientes-btn-warning-exp {
+  background: #ffc107;
+  color: #212529;
+}
+
+.expedientes-btn-warning-exp:hover {
+  background: #e0a800;
+  transform: translateY(-2px);
+}
+
+/* Sin resultados mejorado */
+.expedientes-sin-resultados-exp {
+  text-align: center;
+  padding: 60px 40px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(13, 59, 101, 0.1);
+  color: #666;
+}
+
+.expedientes-no-results-icon-exp {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.expedientes-sin-resultados-exp h3 {
+  color: #0d3b65;
+  margin-bottom: 10px;
+}
+
+.expedientes-sin-resultados-exp p {
+  margin-bottom: 25px;
+  font-size: 16px;
+}
+
+.expedientes-btn-intentar-exp {
+  background: #0d3b65;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.expedientes-btn-intentar-exp:hover {
+  background: #0a2e4d;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .expedientes-container-exp {
+    padding: 15px;
+  }
+
+  .expedientes-titulo-exp {
+    font-size: 2rem;
+  }
+
+  .expedientes-search-input-group-exp {
+    flex-direction: column;
+  }
+
+  .expedientes-search-wrapper-exp {
+    width: 100%;
+  }
+
+  .expedientes-input-busqueda-exp {
+    padding-right: 20px;
+  }
+
+  .expedientes-filter-indicator-exp {
+    position: static;
+    margin-top: 10px;
+    justify-content: center;
+  }
+
+  .expedientes-filters-grid-exp {
+    grid-template-columns: 1fr;
+  }
+
+  .expedientes-detalle-header-exp {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+  }
+
+  .expedientes-header-actions-exp {
+    text-align: left;
+    width: 100%;
+  }
+
+  .expedientes-grid-layout-exp {
+    grid-template-columns: 1fr;
+  }
+
+  .expedientes-columna-exp:first-child {
+    border-right: none;
+    border-bottom: 1px solid #e1e5e9;
+  }
+
+  .expedientes-info-field-exp {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .expedientes-acciones-container-exp {
+    flex-direction: column;
+  }
+
+  .expedientes-btn-primary-exp,
+  .expedientes-btn-secondary-exp,
+  .expedientes-btn-success-exp,
+  .expedientes-btn-warning-exp {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .expedientes-busqueda-container-exp,
+  .expedientes-detalle-paciente-exp {
+    padding: 15px;
+  }
+
+  .expedientes-titulo-exp {
+    font-size: 1.8rem;
+  }
+
+  .expedientes-detalle-titulo-exp {
+    font-size: 1.5rem;
+  }
+
+  .expedientes-card-titulo-exp {
+    font-size: 1.1rem;
+  }
+}

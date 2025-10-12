@@ -23,6 +23,8 @@ import DoctorView from "./assets/components/components_Doctor/HorarioMedico/Doct
 import GlobalLoader from "./assets/components/GlobalLoader/GlobalLoader.jsx";
 import DoctorLayout from "./assets/components/components_Doctor/Doctor_Layout/Doctor_Layout.jsx";
 import Paciente from "./assets/components/components_Doctor/paciente/pacientes.jsx";
+import Tabmenu from "./assets/components/tabMenu/tabMenu.jsx";
+import Expedientes from "./assets/components/Expediente/expediente.jsx";
 
 // --- Componentes de Control de Rutas ---
 
@@ -100,10 +102,9 @@ function App() {
               <Route index element={<DoctorDashboard />} />
               <Route path="horario" element={<DoctorView />} />
               <Route path="paciente/:patientId" element={<Paciente />} />
-              {/* Puedes agregar más rutas específicas para el doctor aquí */}
             </Route>
 
-            {/* --- RUTAS PROTEGIDAS PARA OTROS ROLES --- */}
+            {/* RUTA DE LAYOUT PARA CONSULTA EXTERNA --- */}
             <Route
               path="/consulta-externa"
               element={
@@ -111,7 +112,13 @@ function App() {
                   <ConsultaExterna />
                 </ProtectedRoute>
               }
-            />
+            >
+              {/* Estas rutas se renderizarán dentro del <Outlet/> de ConsultaExterna */}
+              <Route index element={<Tabmenu />} />
+              <Route path="expedientes" element={<Expedientes />} />
+            </Route>
+
+            {/* --- RUTAS PROTEGIDAS PARA OTROS ROLES --- */}
             <Route
               path="/administracion"
               element={
