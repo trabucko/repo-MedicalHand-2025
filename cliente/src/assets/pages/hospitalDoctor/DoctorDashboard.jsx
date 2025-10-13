@@ -1,142 +1,192 @@
 // src/assets/pages/hospitalDoctor/DoctorDashboard.jsx
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
-  FaCalendarAlt,
   FaUserInjured,
-  FaClock,
-  FaChartLine,
   FaStethoscope,
+  FaUserClock,
+  FaCheckCircle,
+  FaHistory,
 } from "react-icons/fa";
 import "./DoctorDashboard.css";
-import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { db } from "../../../firebase";
-import {
-  collection,
-  query,
-  where,
-  getDoc, // Importamos getDoc para buscar un único documento
-  doc, // Importamos doc para referenciar un único documento
-  getDocs,
-  orderBy,
-  Timestamp,
-} from "firebase/firestore";
-import moment from "moment";
+import { useOutletContext, useNavigate } from "react-router-dom";
+
+// Componente para cuando no hay pacientes en espera
+const NoPatientsView = () => (
+  <div className="doctor-no-patients-view">
+    <FaUserClock className="doctor-no-patients-icon" />
+    <h3>No hay pacientes en espera</h3>
+    <p>La fila virtual está vacía en este momento.</p>
+  </div>
+);
+
+// ✨ 1. MODIFICACIÓN: AÑADIR LA PROP 'onClick'
+// Componente para el paciente actual
+const CurrentPatientCard = ({ patient, onFinalize, onClick }) => {
+  if (!patient || patient.patientStatus === "finalizada") {
+    return (
+      <div className="no-current-patient">
+        <FaUserClock className="no-patient-icon" />
+        <p>Esperando al siguiente paciente...</p>
+        <span>El monitor llamará al próximo en la fila.</span>
+      </div>
+    );
+  }
+
+  return (
+    // ✨ 2. AÑADIR LA CLASE 'clickable' Y EL EVENTO onClick AL DIV PRINCIPAL
+    <div className="doctor-current-patient-card clickable" onClick={onClick}>
+      <div className="doctor-patient-header">
+        <div className="doctor-patient-badge current">En Consulta</div>
+        <div className="doctor-turn-number">
+          Turno #{patient.turnNumber || "N/A"}
+        </div>
+      </div>
+      <div className="doctor-patient-info">
+        <h3>
+          {patient.patientFullName ||
+            patient.patientName ||
+            "Nombre no disponible"}
+        </h3>
+        <div className="doctor-patient-details">
+          <div className="doctor-detail-item">
+            <strong>Motivo de consulta:</strong>
+            <span className="consultation-reason">
+              {patient.reason || "No especificado"}
+            </span>
+          </div>
+          <div className="doctor-detail-item">
+            <strong>Especialidad:</strong>
+            <span>{patient.specialty || "Medicina General"}</span>
+          </div>
+          {patient.patientStatus && (
+            <div className="doctor-detail-item">
+              <strong>Estado:</strong>
+              <span className={`status-${patient.patientStatus}`}>
+                {patient.patientStatus}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="doctor-patient-actions">
+        {/* Usamos stopPropagation para que el click en el botón no active el click de la tarjeta */}
+        <button
+          className="doctor-action-primary"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFinalize();
+          }}
+        >
+          <FaCheckCircle /> Finalizar Consulta
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ✨ COMPONENTE para el último paciente atendido (NO ES CLICABLE)
+const LastAttendedCard = ({ patient }) => {
+  if (!patient) {
+    return (
+      <div className="no-last-patient placeholder">
+        <FaHistory className="no-patient-icon" />
+        <p>Último paciente Atendido</p>
+        <span>Se mostrará aquí después de finalizar una consulta.</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="doctor-last-patient-card">
+      <div className="doctor-patient-header">
+        <div className="doctor-patient-badge completed">Finalizado</div>
+        <div className="doctor-turn-number">
+          Turno #{patient.turnNumber || "N/A"}
+        </div>
+      </div>
+      <div className="doctor-patient-info">
+        <h4>
+          {patient.patientFullName ||
+            patient.patientName ||
+            "Nombre no disponible"}
+        </h4>
+        <div className="doctor-patient-details">
+          <div className="doctor-detail-item">
+            <strong>Motivo:</strong>
+            <span className="consultation-reason">
+              {patient.reason || "No especificado"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componente para la tarjeta de paciente en espera (NO ES CLICABLE)
+const WaitingPatientCard = ({ patient, position }) => {
+  if (!patient) return null;
+
+  return (
+    <div className="doctor-waiting-patient-card">
+      <div className="doctor-waiting-header">
+        <div className="doctor-waiting-position">#{position}</div>
+        <div className="doctor-waiting-turn">
+          Turno {patient.turnNumber || "N/A"}
+        </div>
+      </div>
+      <div className="doctor-waiting-info">
+        <h4>
+          {patient.patientFullName ||
+            patient.patientName ||
+            "Nombre no disponible"}
+        </h4>
+        <div className="doctor-waiting-details">
+          <div className="consultation-reason-waiting">
+            {patient.reason || "Consulta general"}
+          </div>
+          <div className="doctor-waiting-time">~{position * 15} min</div>
+        </div>
+      </div>
+      <div className="doctor-waiting-status">
+        <FaUserClock className="waiting-icon" />
+      </div>
+    </div>
+  );
+};
 
 const DoctorDashboard = () => {
-  const { user } = useAuth();
-  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalPatients: 247,
-    todayAppointments: 12,
-    completed: 8,
-    pending: 4,
-  });
+  // OBTENER LOS DATOS REALES DEL CONTEXTO
+  const {
+    currentPatient,
+    handleFinalizeConsultation,
+    waitingPatients,
+    queueStats,
+    lastAttendedPatient,
+  } = useOutletContext();
+
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Si no tenemos la información del usuario del contexto, no hacemos nada.
-    if (!user || !user.hospitalId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchDoctorDataAndAppointments = async () => {
-      setLoading(true);
-      try {
-        // 1. Construimos la RUTA CORRECTA al documento del doctor.
-        const userDocRef = doc(
-          db,
-          "hospitales_MedicalHand",
-          user.hospitalId,
-          "users",
-          user.uid
-        );
-
-        // 2. Obtenemos el documento del doctor para ver si tiene un consultorio asignado.
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (!userDocSnap.exists()) {
-          console.log(
-            "No se encontró el documento del doctor en la ruta correcta."
-          );
-          setLoading(false);
-          return;
-        }
-
-        const doctorData = userDocSnap.data();
-        const { assignedOfficeId } = doctorData; // Obtenemos el ID del consultorio asignado.
-
-        // 3. Verificamos si el doctor tiene un consultorio asignado (el paso que querías).
-        if (!assignedOfficeId) {
-          console.log(
-            "El doctor no tiene un consultorio asignado en su perfil."
-          );
-          // Aquí podrías redirigir o mostrar un mensaje para que seleccione uno.
-          setLoading(false);
-          return;
-        }
-
-        // 4. Si tiene consultorio, construimos la RUTA CORRECTA a las citas.
-        const todayStart = Timestamp.fromDate(moment().startOf("day").toDate());
-        const appointmentsRef = collection(
-          db,
-          "hospitales_MedicalHand", // Colección principal correcta
-          user.hospitalId, // ID del hospital desde el contexto
-          "dr_office",
-          assignedOfficeId, // ID del consultorio que acabamos de encontrar
-          "appointments"
-        );
-
-        // 5. Buscamos las citas de hoy en adelante.
-        const q = query(
-          appointmentsRef,
-          where("appointmentDate", ">=", todayStart),
-          orderBy("appointmentDate", "asc")
-        );
-
-        const querySnapshot = await getDocs(q);
-        const appointmentsList = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          // Hacemos una verificación para evitar errores si 'appointmentDate' no existe
-          const time = data.appointmentDate
-            ? moment(data.appointmentDate.toDate()).format("hh:mm A")
-            : "Hora no definida";
-
-          return {
-            id: doc.id,
-            patientId: data.patientUid,
-            patient: data.patientFullName,
-            time: time,
-            type: data.reason || "Consulta",
-            status: data.status,
-          };
-        });
-
-        setUpcomingAppointments(appointmentsList);
-      } catch (error) {
-        console.error(
-          "Error al obtener los datos del doctor y sus citas:",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDoctorDataAndAppointments();
-  }, [user]); // El efecto depende del objeto 'user'
-
-  const handleAppointmentClick = (patientId) => {
+  // Función para navegar a la ficha del paciente
+  const handleNavigateToPatient = (patientId) => {
     if (patientId) {
       navigate(`/dashboard-doctor/paciente/${patientId}`);
     } else {
-      console.error("ID del paciente no encontrado en esta cita.");
+      alert(
+        "No se encontró la información completa de este paciente para abrir su ficha."
+      );
     }
   };
 
+  console.log("DoctorDashboard - Datos del contexto:", {
+    currentPatient,
+    waitingPatients,
+    queueStats,
+    lastAttendedPatient,
+  });
+
+  // Componente de tarjeta de estadísticas
   const StatCard = ({ icon, title, value, subtitle, color }) => (
     <div className="doctor-stat-card">
       <div className="doctor-stat-icon" style={{ backgroundColor: color }}>
@@ -150,154 +200,108 @@ const DoctorDashboard = () => {
     </div>
   );
 
-  const AppointmentCard = ({ appointment, onClick }) => (
-    <div
-      className={`doctor-appointment-item ${appointment.status}`}
-      onClick={onClick}
-      style={{ cursor: "pointer" }}
-    >
-      <div className="doctor-appointment-time">
-        <FaClock />
-        <span>{appointment.time}</span>
-      </div>
-      <div className="doctor-appointment-info">
-        <h4>{appointment.patient}</h4>
-        <p>{appointment.type}</p>
-      </div>
-      <div className={`doctor-appointment-status ${appointment.status}`}>
-        {appointment.status}
-      </div>
-    </div>
-  );
-
-  if (loading) {
+  // Estado de carga mientras los datos del contexto se resuelven
+  if (currentPatient === undefined || queueStats === undefined) {
     return (
-      <div className="loading-container" style={{ padding: "50px" }}>
+      <div className="loading-container">
         <div className="loading-spinner"></div>
-        <h2 style={{ textAlign: "center", marginTop: "20px" }}>
-          Cargando información del doctor...
-        </h2>
+        <h2>Sincronizando con la fila virtual...</h2>
       </div>
     );
   }
 
   return (
     <main className="doctor-dash-content">
+      {/* ESTADÍSTICAS */}
       <section className="doctor-stats-grid">
         <StatCard
           icon={<FaUserInjured />}
-          title="Pacientes Totales"
-          value={stats.totalPatients}
-          subtitle="+12 este mes"
-          color="#4CAF50"
-        />
-        <StatCard
-          icon={<FaCalendarAlt />}
-          title="Citas Hoy"
-          value={stats.todayAppointments}
-          subtitle={`${stats.completed} completadas`}
-          color="#2196F3"
-        />
-        <StatCard
-          icon={<FaClock />}
-          title="Pendientes"
-          value={stats.pending}
-          subtitle="Por atender"
-          color="#FF9800"
+          title="Total Hoy"
+          value={queueStats.totalToday || 0}
+          subtitle="Pacientes en fila"
+          color="#2563eb"
         />
         <StatCard
           icon={<FaStethoscope />}
-          title="Consultas Mensuales"
-          value="184"
-          subtitle="+8% vs mes anterior"
-          color="#9C27B0"
+          title="En Consulta"
+          value={queueStats.inProgress || 0}
+          subtitle="Paciente actual"
+          color="#059669"
+        />
+        <StatCard
+          icon={<FaUserClock />}
+          title="En Espera"
+          value={queueStats.waiting || 0}
+          subtitle="Próximos en fila"
+          color="#d97706"
+        />
+        <StatCard
+          icon={<FaCheckCircle />}
+          title="Finalizados"
+          value={queueStats.completed || 0}
+          subtitle="Consultas del día"
+          color="#059669"
         />
       </section>
 
-      <section className="doctor-appointments-section">
-        <div className="doctor-section-header">
-          <h2>Próximas Citas</h2>
-          <button className="doctor-view-all-btn">Ver todas</button>
-        </div>
-        <div className="doctor-appointments-list">
-          {upcomingAppointments.length === 0 ? (
-            <p className="doctor-no-appointments">
-              No hay citas próximas para hoy.
-            </p>
-          ) : (
-            upcomingAppointments.map((appointment) => (
-              <AppointmentCard
-                key={appointment.id}
-                appointment={appointment}
-                onClick={() => handleAppointmentClick(appointment.patientId)}
+      {/* ✨ ESTRUCTURA DE 2 COLUMNAS CON ÚLTIMO PACIENTE DEBAJO */}
+      <div className="doctor-main-grid">
+        {/* Columna izquierda - Paciente Actual + Último Finalizado */}
+        <div className="doctor-left-column">
+          {/* Paciente Actual */}
+          <section className="doctor-queue-section current-section">
+            <div className="doctor-section-header">
+              <h2>Paciente en Consulta</h2>
+              <div className="section-indicator current">Activo</div>
+            </div>
+            <div className="doctor-queue-content">
+              {/* ✨ 3. PASAR LA FUNCIÓN DE NAVEGACIÓN SÓLO A ESTA TARJETA */}
+              <CurrentPatientCard
+                patient={currentPatient}
+                onFinalize={handleFinalizeConsultation}
+                onClick={() =>
+                  handleNavigateToPatient(currentPatient?.patientUid)
+                }
               />
-            ))
-          )}
-        </div>
-      </section>
+            </div>
+          </section>
 
-      <div className="doctor-dash-grid">
-        <section className="doctor-quick-actions">
+          {/* ✨ Último Paciente Finalizado (debajo) */}
+          <section className="doctor-queue-section last-attended-section">
+            <div className="doctor-section-header">
+              <h2>Último Paciente Atendido</h2>
+              <div className="section-indicator completed">Historial</div>
+            </div>
+            <div className="doctor-queue-content">
+              {/* Esta tarjeta ya no recibe 'onClick' */}
+              <LastAttendedCard patient={lastAttendedPatient} />
+            </div>
+          </section>
+        </div>
+
+        {/* Columna derecha - Lista de Espera */}
+        <section className="doctor-list-section waiting-section">
           <div className="doctor-section-header">
-            <h2>Acciones Rápidas</h2>
-          </div>
-          <div className="doctor-actions-grid">
-            <button className="doctor-action-btn">
-              <FaCalendarAlt />
-              <span>Nueva Cita</span>
-            </button>
-            <button className="doctor-action-btn">
-              <FaUserInjured />
-              <span>Nuevo Paciente</span>
-            </button>
-            <button className="doctor-action-btn">
-              <FaStethoscope />
-              <span>Registrar Consulta</span>
-            </button>
-            <button className="doctor-action-btn">
-              <FaChartLine />
-              <span>Generar Reporte</span>
-            </button>
-          </div>
-        </section>
-        <section className="doctor-recent-activity">
-          <div className="doctor-section-header">
-            <h2>Actividad Reciente</h2>
-          </div>
-          <div className="doctor-activity-list">
-            <div className="doctor-activity-item">
-              <div className="doctor-activity-icon">
-                <FaUserInjured />
-              </div>
-              <div className="doctor-activity-content">
-                <p>
-                  Nuevo paciente registrado: <strong>Laura Sánchez</strong>
-                </p>
-                <span className="doctor-activity-time">Hace 15 minutos</span>
-              </div>
+            <h2>Pacientes en Espera</h2>
+            <div className="waiting-count">
+              {queueStats.waiting || 0} pacientes
             </div>
-            <div className="doctor-activity-item">
-              <div className="doctor-activity-icon">
-                <FaCalendarAlt />
+          </div>
+          <div className="doctor-list-content">
+            {waitingPatients && waitingPatients.length > 0 ? (
+              <div className="patients-waiting-list">
+                {waitingPatients.map((patient, index) => (
+                  // Esta tarjeta no recibe 'onClick'
+                  <WaitingPatientCard
+                    key={patient.id || patient.turnNumber || index}
+                    patient={patient}
+                    position={index + 1}
+                  />
+                ))}
               </div>
-              <div className="doctor-activity-content">
-                <p>
-                  Cita completada con <strong>Carlos Mendoza</strong>
-                </p>
-                <span className="doctor-activity-time">Hace 1 hora</span>
-              </div>
-            </div>
-            <div className="doctor-activity-item">
-              <div className="doctor-activity-icon">
-                <FaStethoscope />
-              </div>
-              <div className="doctor-activity-content">
-                <p>
-                  Diagnóstico registrado para <strong>Ana Rodríguez</strong>
-                </p>
-                <span className="doctor-activity-time">Hace 2 horas</span>
-              </div>
-            </div>
+            ) : (
+              <NoPatientsView />
+            )}
           </div>
         </section>
       </div>

@@ -1,5 +1,5 @@
 // src/assets/components/components_Doctor/Doctor_Layout/Doctor_Layout.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import {
   collection,
@@ -10,12 +10,14 @@ import {
   doc,
   writeBatch,
   serverTimestamp,
+  updateDoc,
+  getDoc,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../../../../firebase";
 import { useAuth } from "../../../context/AuthContext";
 import styled from "styled-components";
 
-// Se renombra el import para evitar conflictos de nombres
 import OriginalSidebar from "../../Sidebar/Sidebar";
 import Header from "../../components_Doctor/HorarioMedico/headerDoctor/header";
 
@@ -41,7 +43,10 @@ const Sidebar = styled(OriginalSidebar)`
     transform: translateX(0);
   }
 
-  /* El bloque @media que forzaba la visibilidad ha sido ELIMINADO */
+  // ✨ CORRECCIÓN 1: En escritorio, siempre es visible.
+  @media (min-width: 768px) {
+    transform: translateX(0);
+  }
 `;
 
 const MainView = styled.div`
@@ -49,11 +54,9 @@ const MainView = styled.div`
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
-
+  // ✨ CORRECCIÓN 2: El margen izquierdo SOLO se aplica en escritorio.
   @media (min-width: 768px) {
-    &.sidebar-open {
-      margin-left: 280px;
-    }
+    margin-left: 0px;
   }
 `;
 
@@ -63,7 +66,6 @@ const PageContent = styled.main`
   overflow-y: auto;
 `;
 
-// ... (El resto de tus styled-components para el Modal)
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -76,6 +78,7 @@ const ModalOverlay = styled.div`
   align-items: center;
   z-index: 1000;
 `;
+
 const ModalContent = styled.div`
   background: white;
   padding: 2rem;
@@ -84,6 +87,7 @@ const ModalContent = styled.div`
   max-width: 421px;
   width: 90%;
 `;
+
 const ModalHeader = styled.div`
   h3 {
     margin: 0 0 1rem 0;
@@ -92,6 +96,7 @@ const ModalHeader = styled.div`
     font-weight: 600;
   }
 `;
+
 const ModalBody = styled.div`
   p {
     margin: 0 0 1rem 0;
@@ -100,12 +105,14 @@ const ModalBody = styled.div`
     font-size: 1rem;
   }
 `;
+
 const ModalActions = styled.div`
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
   margin-top: 2rem;
 `;
+
 const Button = styled.button`
   padding: 0.5rem 1.5rem;
   border: none;
@@ -115,27 +122,33 @@ const Button = styled.button`
   font-weight: 500;
   transition: all 0.2s ease;
   min-width: 80px;
+
   &:focus {
     outline: 2px solid #007bff;
     outline-offset: 2px;
   }
 `;
+
 const CancelButton = styled(Button)`
   background-color: #f8f9fa;
   color: #333;
   border: 1px solid #dee2e6;
+
   &:hover {
     background-color: #e2e6ea;
     border-color: #dae0e5;
   }
 `;
+
 const ConfirmButton = styled(Button)`
   background-color: #007bff;
   color: white;
+
   &:hover {
     background-color: #0056b3;
   }
 `;
+
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -144,6 +157,7 @@ const LoadingContainer = styled.div`
   font-size: 1.1rem;
   color: #666;
 `;
+
 const CheckboxContainer = styled.div`
   display: flex;
   align-items: center;
@@ -167,18 +181,41 @@ const CheckboxContainer = styled.div`
   }
 `;
 
+// Función auxiliar para formato de fecha
+const getFormattedDate = (date) => {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 const DoctorLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Estados
   const [selectedConsultorio, setSelectedConsultorio] = useState(null);
   const [availableConsultorios, setAvailableConsultorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [releaseOnLogout, setReleaseOnLogout] = useState(false);
+  const [releaseOnLogout, setReleaseOnLogout] = useState(true);
+
+  // Estados para la fila virtual
+  const [queueData, setQueueData] = useState(null);
+  const [patientsInQueue, setPatientsInQueue] = useState([]);
+  const [currentPatientDetails, setCurrentPatientDetails] = useState(null);
+  const [queueId, setQueueId] = useState(null);
+
+  // ✨ 1. NUEVO ESTADO PARA EL ÚLTIMO PACIENTE ATENDIDO
+  const [lastAttendedPatient, setLastAttendedPatient] = useState(null);
+
+  // ✨ 2. CREAR UNA REFERENCIA PARA RECORDAR EL TURNO ANTERIOR
+  const previousTurnRef = useRef();
+
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
 
+  // useEffect para los consultorios
   useEffect(() => {
     if (!user?.uid || !user.hospitalId) {
       setLoading(false);
@@ -212,11 +249,139 @@ const DoctorLayout = () => {
     return () => unsubscribe();
   }, [user?.uid, user.hospitalId]);
 
-  // <-- FUNCIÓN MODIFICADA CON DEPURACIÓN -->
-  // Reemplaza tu función handleSelectConsultorio con esta:
-  const handleSelectConsultorio = async (consultorio) => {
-    alert("PASO 1: ¡LA FUNCIÓN SÍ SE ESTÁ EJECUTANDO!"); // <-- PRUEBA DEFINITIVA
+  // Listener para el documento principal de la fila
+  useEffect(() => {
+    if (!user?.hospitalId) return;
+    const todayFormatted = getFormattedDate(new Date());
+    const queueName = "ConsultaExterna";
+    const queueDocId = `${queueName}-${user.hospitalId}-${todayFormatted}`;
+    setQueueId(queueDocId);
+    const queueDocRef = doc(db, "filas_virtuales", queueDocId);
+    const unsubscribe = onSnapshot(queueDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setQueueData(docSnap.data());
+      } else {
+        setQueueData(null);
+      }
+    });
+    return () => unsubscribe();
+  }, [user?.hospitalId]);
 
+  // Listener para la subcolección de pacientes
+  useEffect(() => {
+    if (!queueId) {
+      setPatientsInQueue([]);
+      return;
+    }
+    const patientsRef = collection(db, "filas_virtuales", queueId, "pacientes");
+    const q = query(patientsRef, orderBy("turnNumber", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const patientsData = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      setPatientsInQueue(patientsData);
+    });
+    return () => unsubscribe();
+  }, [queueId]);
+
+  // Identificar al paciente que corresponde al turno actual
+  const patientFromQueue = useMemo(() => {
+    if (!queueData || queueData.currentTurn === 0) return null;
+    return patientsInQueue.find((p) => p.turnNumber === queueData.currentTurn);
+  }, [queueData, patientsInQueue]);
+
+  // Buscar detalles completos del paciente identificado
+  useEffect(() => {
+    const fetchFullAppointmentDetails = async () => {
+      if (
+        !patientFromQueue ||
+        !patientFromQueue.appointmentId ||
+        !selectedConsultorio?.id
+      ) {
+        setCurrentPatientDetails(patientFromQueue);
+        return;
+      }
+      try {
+        const appointmentRef = doc(
+          db,
+          "hospitales_MedicalHand",
+          user.hospitalId,
+          "dr_office",
+          selectedConsultorio.id,
+          "appointments",
+          patientFromQueue.appointmentId
+        );
+        const appointmentSnap = await getDoc(appointmentRef);
+        if (appointmentSnap.exists()) {
+          setCurrentPatientDetails({
+            ...patientFromQueue,
+            ...appointmentSnap.data(),
+          });
+        } else {
+          setCurrentPatientDetails(patientFromQueue);
+        }
+      } catch (error) {
+        console.error("Error al buscar detalles completos de la cita:", error);
+        setCurrentPatientDetails(patientFromQueue);
+      }
+    };
+    fetchFullAppointmentDetails();
+  }, [patientFromQueue, selectedConsultorio, user?.hospitalId]);
+
+  // ✨ 3. REEMPLAZAR LA LÓGICA DE LIMPIEZA
+  // Este efecto ahora solo se fija en si el NÚMERO DE TURNO ha cambiado.
+  useEffect(() => {
+    const currentTurn = queueData?.currentTurn;
+
+    // Si hay un turno previo guardado y es DIFERENTE al actual, significa que el monitor avanzó la fila.
+    if (
+      previousTurnRef.current !== undefined &&
+      previousTurnRef.current !== currentTurn
+    ) {
+      console.log(
+        `CAMBIO DE TURNO DETECTADO: de ${previousTurnRef.current} a ${currentTurn}. Limpiando último paciente.`
+      );
+      setLastAttendedPatient(null);
+    }
+
+    // Actualizamos la referencia para la próxima vez que este efecto se ejecute.
+    previousTurnRef.current = currentTurn;
+  }, [queueData?.currentTurn]); // Dependencia clave: solo el número de turno.
+
+  // ✨ 4. CALCULAR DATOS ADICIONALES PARA PASAR AL DASHBOARD
+  const waitingPatients = useMemo(() => {
+    if (!patientsInQueue.length) return [];
+
+    return patientsInQueue
+      .filter((p) => p.patientStatus === "esperando")
+      .sort((a, b) => a.turnNumber - b.turnNumber)
+      .slice(0, 10); // Limitar a los próximos 10 pacientes
+  }, [patientsInQueue]);
+
+  const queueStats = useMemo(() => {
+    const completed = patientsInQueue.filter(
+      (p) => p.patientStatus === "finalizada"
+    ).length;
+    const waiting = patientsInQueue.filter(
+      (p) => p.patientStatus === "esperando"
+    ).length;
+    const inProgress = patientsInQueue.filter(
+      (p) => p.patientStatus === "en_consulta"
+    ).length;
+
+    return {
+      totalToday: queueData?.lastAssignedTurn || patientsInQueue.length,
+      inProgress: inProgress,
+      waiting: waiting,
+      completed: completed,
+      currentTurn: queueData?.currentTurn || 0,
+      lastAssignedTurn: queueData?.lastAssignedTurn || 0,
+    };
+  }, [patientsInQueue, queueData]);
+
+  // Función para seleccionar consultorio
+  const handleSelectConsultorio = async (consultorio) => {
     if (!consultorio || !user) {
       alert("ERROR: Faltan datos de consultorio o usuario.");
       return;
@@ -245,31 +410,28 @@ const DoctorLayout = () => {
         assignedDoctorName: user.fullName,
         lastAssignment: serverTimestamp(),
       });
+
       batch.update(userDocRef, {
         assignedOfficeId: consultorio.id,
         assignedOfficeName: consultorio.name,
       });
 
       await batch.commit();
-      alert(
-        "PASO 2: ¡ÉXITO! Los datos se intentaron guardar en la base de datos."
-      );
       setSelectedConsultorio(consultorio);
     } catch (error) {
-      alert("PASO 2: ¡ERROR! Hubo un problema al intentar guardar los datos.");
-      console.error("Error en batch.commit:", error);
+      console.error("Error al asignar consultorio:", error);
+      alert("Hubo un problema al intentar asignar el consultorio.");
     }
   };
 
+  // Función para liberar consultorio
   const handleReleaseConsultorio = async () => {
     if (!selectedConsultorio || !user) return;
 
     const consultorioToRelease = selectedConsultorio;
-    setSelectedConsultorio(null); // Actualiza el estado localmente primero para una UI más rápida
+    setSelectedConsultorio(null);
 
     const batch = writeBatch(db);
-
-    // 1. Referencia al consultorio
     const consultorioRef = doc(
       db,
       "hospitales_MedicalHand",
@@ -277,10 +439,7 @@ const DoctorLayout = () => {
       "dr_office",
       consultorioToRelease.id
     );
-
-    // 2. Referencia al documento del doctor
     const userDocRef = doc(
-      // <-- AÑADIDO
       db,
       "hospitales_MedicalHand",
       user.hospitalId,
@@ -289,16 +448,13 @@ const DoctorLayout = () => {
     );
 
     try {
-      // Libera el consultorio
       batch.update(consultorioRef, {
         status: "disponible",
         assignedDoctorId: null,
         assignedDoctorName: null,
       });
 
-      // Limpia la asignación en el documento del doctor
       batch.update(userDocRef, {
-        // <-- AÑADIDO
         assignedOfficeId: null,
         assignedOfficeName: null,
       });
@@ -306,10 +462,44 @@ const DoctorLayout = () => {
       await batch.commit();
     } catch (error) {
       console.error("Error al liberar el consultorio:", error);
-      setSelectedConsultorio(consultorioToRelease); // Revertir si hay error
+      setSelectedConsultorio(consultorioToRelease);
     }
   };
 
+  // ✨ 5. ACTUALIZAR LA FUNCIÓN PARA FINALIZAR CONSULTA
+  const handleFinalizeConsultation = async () => {
+    if (
+      !currentPatientDetails?.id ||
+      currentPatientDetails.patientStatus === "finalizada"
+    ) {
+      alert(
+        "No hay un paciente activo para finalizar o ya ha sido finalizado."
+      );
+      return;
+    }
+
+    const patientToFinalize = { ...currentPatientDetails };
+    const queueDocId = queueId;
+    const patientDocRef = doc(
+      db,
+      "filas_virtuales",
+      queueDocId,
+      "pacientes",
+      patientToFinalize.id
+    );
+
+    try {
+      await updateDoc(patientDocRef, { patientStatus: "finalizada" });
+      setLastAttendedPatient(patientToFinalize);
+      // La siguiente línea fue eliminada:
+      // alert("Consulta finalizada. Esperando al siguiente paciente.");
+    } catch (error) {
+      console.error("Error al finalizar la consulta:", error);
+      alert("Hubo un error al marcar la consulta como finalizada.");
+    }
+  };
+
+  // Funciones de logout
   const handleLogoutClick = () => {
     setSidebarOpen(false);
     setShowLogoutModal(true);
@@ -331,7 +521,6 @@ const DoctorLayout = () => {
 
   const handleCancelLogout = () => {
     setShowLogoutModal(false);
-    setReleaseOnLogout(true);
   };
 
   if (loading) {
@@ -340,7 +529,6 @@ const DoctorLayout = () => {
 
   return (
     <>
-      {/* El Sidebar ahora es un hermano del LayoutContainer */}
       <Sidebar
         className={isSidebarOpen ? "is-open" : ""}
         isOpen={isSidebarOpen}
@@ -349,9 +537,8 @@ const DoctorLayout = () => {
         role={user?.claims?.role}
         handleLogout={handleLogoutClick}
       />
-
-      {/* El LayoutContainer ahora solo envuelve el contenido principal */}
       <LayoutContainer>
+        {/* ✨ CORRECCIÓN 3: Ya no se necesita la clase dinámica aquí */}
         <MainView>
           <Header
             user={user}
@@ -365,13 +552,19 @@ const DoctorLayout = () => {
                 selectedConsultorio,
                 availableConsultorios,
                 handleSelectConsultorio,
+                currentPatient: currentPatientDetails,
+                handleFinalizeConsultation,
+                waitingPatients: waitingPatients,
+                queueStats: queueStats,
+                queueData: queueData,
+                allPatientsInQueue: patientsInQueue,
+                // ✨ 6. PASAR EL NUEVO ESTADO AL CONTEXTO
+                lastAttendedPatient: lastAttendedPatient,
               }}
             />
           </PageContent>
         </MainView>
       </LayoutContainer>
-
-      {/* El modal se queda fuera de la estructura principal */}
       {showLogoutModal && (
         <ModalOverlay onClick={handleCancelLogout}>
           <ModalContent onClick={(e) => e.stopPropagation()}>

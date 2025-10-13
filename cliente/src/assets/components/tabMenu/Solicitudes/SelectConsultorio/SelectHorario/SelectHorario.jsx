@@ -18,11 +18,12 @@ import ResumenCita from "./resumenCita/resumenCita";
 import { db } from "../../../../../../firebase";
 import {
   collection,
-  onSnapshot, // Usaremos onSnapshot para tiempo real
+  onSnapshot,
   doc,
   updateDoc,
   Timestamp,
   addDoc,
+  setDoc, // ✨ 1. Importar setDoc
 } from "firebase/firestore";
 
 moment.locale("es");
@@ -34,7 +35,7 @@ const SelectHorario = ({
   onBack,
   onConfirm,
   appointmentRequest = {},
-  hospitalId, // La prop que ya estás recibiendo
+  hospitalId,
 }) => {
   const [eventsList, setEventsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +61,6 @@ const SelectHorario = ({
   };
 
   useEffect(() => {
-    // Verificamos que tengamos los IDs necesarios antes de consultar
     if (!hospitalId || !consultorio?.id) {
       console.error(
         "[SelectHorario] Falta hospitalId o consultorio.id para buscar horarios."
@@ -71,17 +71,15 @@ const SelectHorario = ({
 
     setLoading(true);
 
-    // CONSTRUIMOS LA RUTA DINÁMICA
     const scheduleRef = collection(
       db,
       "hospitales_MedicalHand",
-      hospitalId, // <-- Usamos el hospitalId dinámico
+      hospitalId,
       "dr_office",
       consultorio.id,
       "schedules"
     );
 
-    // Usamos 'onSnapshot' para escuchar cambios en tiempo real
     const unsubscribe = onSnapshot(
       scheduleRef,
       (snapshot) => {
@@ -97,9 +95,6 @@ const SelectHorario = ({
           if (data.start?.toDate && data.end?.toDate) {
             const start = data.start.toDate();
             const end = data.end.toDate();
-
-            // ▼▼▼ LÓGICA DE FILTRADO ELIMINADA ▼▼▼
-            // Se elimina el 'if (moment(start).isAfter(moment()))' para mostrar todos los horarios recibidos
 
             if (data.isAvailable) {
               generatedEvents.push({
@@ -120,7 +115,6 @@ const SelectHorario = ({
                 isBooked: true,
               });
             }
-            // ▲▲▲ FIN DE LA MODIFICACIÓN ▲▲▲
           } else {
             console.warn(
               `[SelectHorario] El horario con ID ${docId} tiene fechas inválidas.`
@@ -141,7 +135,6 @@ const SelectHorario = ({
       }
     );
 
-    // Limpiamos el listener cuando el componente se desmonte
     return () => unsubscribe();
   }, [consultorio, hospitalId]);
 
@@ -204,9 +197,11 @@ const SelectHorario = ({
         clinicOffice: consultorio.name,
         appointmentDate: Timestamp.fromDate(fechaHora),
         createdAt: Timestamp.now(),
+        // El campo 'appointment_id' ya no es necesario aquí,
+        // porque el ID del DOCUMENTO será el mismo que el de la solicitud.
       };
 
-      // Usamos la ruta dinámica para crear la nueva cita
+      // ✨ 2. Definimos la ruta a la colección de citas confirmadas
       const appointmentsRef = collection(
         db,
         "hospitales_MedicalHand",
@@ -215,12 +210,13 @@ const SelectHorario = ({
         consultorio.id,
         "appointments"
       );
-      const newAppointmentRef = await addDoc(
-        appointmentsRef,
-        newAppointmentData
-      );
 
-      // Usamos la ruta dinámica para actualizar el horario
+      // ✨ 3. Creamos una referencia al NUEVO documento USANDO EL ID de la solicitud original
+      const newAppointmentRef = doc(appointmentsRef, appointmentRequest.id);
+
+      // ✨ 4. Usamos setDoc para crear el documento con el ID que especificamos
+      await setDoc(newAppointmentRef, newAppointmentData);
+
       const scheduleRef = doc(
         db,
         "hospitales_MedicalHand",
@@ -230,12 +226,12 @@ const SelectHorario = ({
         "schedules",
         selectedEvent.id
       );
+      // Ahora actualizamos el horario con el ID del nuevo documento de cita, que es el mismo que el de la solicitud
       await updateDoc(scheduleRef, {
         isAvailable: false,
-        appointmentId: newAppointmentRef.id,
+        appointmentId: newAppointmentRef.id, // Esto sigue funcionando, .id nos da el ID de la referencia
       });
 
-      // Actualizamos la solicitud original
       const originalRequestRef = doc(db, "citas", appointmentRequest.id);
       await updateDoc(originalRequestRef, {
         status: "confirmada",
@@ -346,7 +342,7 @@ const SelectHorario = ({
               messages={messages}
               startAccessor="start"
               endAccessor="end"
-              style={{ height: "calc(100vh - 200px)" }} // Ajuste de altura
+              style={{ height: "calc(100vh - 200px)" }}
               date={calendarDate}
               onNavigate={(newDate) => setCalendarDate(newDate)}
               views={["month", "week", "day", "agenda"]}
