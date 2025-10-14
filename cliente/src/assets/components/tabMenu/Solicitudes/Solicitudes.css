@@ -35,6 +35,7 @@
 
 .header-title-section {
   flex: 1;
+  flex-direction: column;
 }
 
 .status-required {

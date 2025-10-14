@@ -10,7 +10,7 @@ import FilasVirtuales from "./Fila/FilasVirtuales"; // La ruta que proporcionast
 const TabMenu = () => {
   // Estado para controlar qué pestaña está activa.
   // Puedes cambiar el valor inicial a "FilasVirtuales" si quieres que sea la primera en mostrarse.
-  const [activeTab, setActiveTab] = useState("FilasVirtuales");
+  const [activeTab, setActiveTab] = useState("Solicitud");
 
   return (
     <section className="tab-section">

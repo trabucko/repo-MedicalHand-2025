@@ -8,6 +8,14 @@ import {
   FaArrowRight,
   FaSync,
   FaExclamationTriangle,
+  FaClock,
+  FaStethoscope,
+  FaListAlt,
+  FaHospital,
+  FaUserClock,
+  FaUserCheck,
+  FaChevronRight,
+  FaEllipsisH,
 } from "react-icons/fa";
 
 // Firebase
@@ -35,6 +43,96 @@ const getFormattedDate = (date) => {
   return `${day}-${month}-${year}`;
 };
 
+// Componentes reutilizables
+const StatusBadge = ({ status, isCurrent }) => {
+  const getStatusConfig = () => {
+    switch (status) {
+      case "en_consulta":
+        return {
+          icon: <FaStethoscope />,
+          text: "En Consulta",
+          className: "en_consulta",
+        };
+      case "esperando":
+        return {
+          icon: <FaUserClock />,
+          text: "Esperando",
+          className: "esperando",
+        };
+      case "finalizada":
+        return {
+          icon: <FaUserCheck />,
+          text: "Completado",
+          className: "finalizada",
+        };
+      default:
+        return {
+          icon: <FaUserClock />,
+          text: "Pendiente",
+          className: "esperando",
+        };
+    }
+  };
+
+  const config = getStatusConfig();
+
+  return (
+    <div
+      className={`status-badge ${config.className} ${
+        isCurrent ? "current" : ""
+      }`}
+    >
+      {config.icon}
+      <span>{config.text}</span>
+    </div>
+  );
+};
+
+const PatientItem = ({ patient, isCurrent }) => {
+  const displayStatus =
+    isCurrent && patient.patientStatus !== "finalizada"
+      ? "en_consulta"
+      : patient.patientStatus;
+
+  return (
+    <div
+      className={`patient-item ${displayStatus} ${isCurrent ? "current" : ""}`}
+    >
+      <div className="patient-turn">
+        <span className="turn-number">#{patient.turnNumber}</span>
+      </div>
+      <div className="patient-info">
+        <div className="patient-main">
+          <span className="patient-name">{patient.patientName}</span>
+          <div className="patient-meta">
+            <span className="checkin-time">
+              <FaClock className="meta-icon" />
+              {patient.checkInTime?.toDate().toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+        </div>
+        <StatusBadge status={displayStatus} isCurrent={isCurrent} />
+      </div>
+    </div>
+  );
+};
+
+const StatCard = ({ icon, title, value, subtitle, type }) => (
+  <div className={`stat-card ${type}`}>
+    <div className="stat-content">
+      <div className="stat-header">
+        <div className="stat-icon">{icon}</div>
+        <span className="stat-title">{title}</span>
+      </div>
+      <span className="stat-number">{value}</span>
+      <span className="stat-subtitle">{subtitle}</span>
+    </div>
+  </div>
+);
+
 const FilasVirtuales = () => {
   const { user: currentUser } = useAuth();
 
@@ -56,18 +154,14 @@ const FilasVirtuales = () => {
     const queueDocId = `${queueName}-${currentUser.hospitalId}-${todayFormatted}`;
     const queueDocRef = doc(db, QUEUE_COLLECTION, queueDocId);
 
-    console.log("🔍 Escuchando documento de fila:", queueDocId);
-
     const unsubscribe = onSnapshot(queueDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        console.log("✅ ¡Documento de fila encontrado! Datos:", data);
         setQueueData({
           currentTurn: data.currentTurn || 0,
           lastAssignedTurn: data.lastAssignedTurn || 0,
         });
       } else {
-        console.log("❌ No existe documento de fila para hoy con ese ID.");
         setQueueData({ currentTurn: 0, lastAssignedTurn: 0 });
       }
       setLoading(false);
@@ -97,11 +191,6 @@ const FilasVirtuales = () => {
         ...docSnap.data(),
       }));
       setPatientsInQueue(patients);
-      console.log(
-        "👥 Lista de pacientes actualizada:",
-        patients.length,
-        patients
-      );
     });
 
     return () => unsubscribe();
@@ -115,7 +204,6 @@ const FilasVirtuales = () => {
 
   // Cálculo de estadísticas
   useEffect(() => {
-    // ✨ CORRECCIÓN CLAVE: Contar pacientes con estado "finalizada"
     const finalizadosCount = patientsInQueue.filter(
       (p) => p.patientStatus === "finalizada"
     ).length;
@@ -124,7 +212,7 @@ const FilasVirtuales = () => {
     ).length;
 
     setStats({
-      attended: finalizadosCount, // 'attended' es el nombre interno, pero representa finalizados
+      attended: finalizadosCount,
       waiting: waitingCount,
       total: queueData.lastAssignedTurn,
     });
@@ -134,7 +222,6 @@ const FilasVirtuales = () => {
   const canAdvanceTurn = useMemo(() => {
     if (
       currentPatientInConsultation &&
-      // ✨ CORRECCIÓN CLAVE: El botón se activa cuando el estado es "finalizada"
       currentPatientInConsultation.patientStatus === "finalizada"
     ) {
       return true;
@@ -198,10 +285,8 @@ const FilasVirtuales = () => {
         );
         transaction.update(nextPatientRef, { patientStatus: "en_consulta" });
       });
-
-      console.log(`✅ Turno avanzado a: ${newTurnNumber}`);
     } catch (error) {
-      console.error("❌ Error al avanzar turno:", error);
+      console.error("Error al avanzar turno:", error);
       alert("Error al avanzar el turno. Por favor, intenta nuevamente.");
     } finally {
       setIsAdvancing(false);
@@ -221,174 +306,184 @@ const FilasVirtuales = () => {
 
   return (
     <div className="filas-virtuales-container">
+      {/* Header Compacto */}
       <div className="queue-header">
-        <h2 className="queue-title">Fila Virtual</h2>
-        <div className="queue-subtitle">
-          {currentUser?.hospitalName} - Monitor
-        </div>
-      </div>
-
-      <div className="current-status-panel">
-        <div className="current-turn-section">
-          <div className="turn-display">
-            <span className="turn-label">Turno Actual</span>
-            <span className="turn-number">
-              {queueData.currentTurn || "N/A"}
-            </span>
-          </div>
-
-          {currentPatientInConsultation ? (
-            <div className="current-patient-info">
-              <div className="patient-badge">
-                <FaUserInjured className="patient-icon" />
-                <span>En Consulta</span>
-              </div>
-              <h3 className="patient-name">
-                {currentPatientInConsultation.patientName}
-              </h3>
-              <div className="patient-details">
-                <span className="turn-badge">
-                  Turno #{currentPatientInConsultation.turnNumber}
-                </span>
-                {/* ✨ CORRECCIÓN CLAVE: Mostrar el mensaje cuando el estado sea "finalizada" */}
-                {currentPatientInConsultation.patientStatus ===
-                  "finalizada" && (
-                  <span className="ready-badge">
-                    <FaCheckCircle /> Finalizada, llama al próximo paciente
-                  </span>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="no-patient-info">
-              <div className="no-patient-badge">
-                <FaUsers className="no-patient-icon" />
-                <span>Sin paciente en consulta</span>
-              </div>
-              <p>
-                {queueData.lastAssignedTurn > queueData.currentTurn
-                  ? "Listo para llamar al siguiente paciente."
-                  : "No hay pacientes en la fila."}
+        <div className="header-main">
+          <div className="header-title-section">
+            <div>
+              <h1>Fila Virtual</h1>
+              <p className="header-subtitle">
+                {currentUser?.hospitalName} - Consulta Externa
               </p>
             </div>
-          )}
-        </div>
-
-        <div className="advance-section">
-          <button
-            className={`advance-btn ${canAdvanceTurn ? "active" : "disabled"}`}
-            onClick={handleAdvanceTurn}
-            disabled={!canAdvanceTurn || isAdvancing}
-          >
-            {isAdvancing ? (
-              <>
-                <FaSync className="spinning" /> Avanzando...
-              </>
-            ) : (
-              <>
-                <FaArrowRight /> Llamar Siguiente Paciente
-              </>
-            )}
-          </button>
-          {!canAdvanceTurn && currentPatientInConsultation && (
-            <div className="advance-hint">
-              <FaExclamationTriangle />
-              Esperando que el doctor marque la consulta como Finalizada
+          </div>
+          <div className="header-stats">
+            <div className="header-stat">
+              <span className="stat-value">{stats.total}</span>
+              <span className="stat-label">Total</span>
             </div>
-          )}
-        </div>
-      </div>
-
-      <div className="queue-stats">
-        <div className="stat-card waiting">
-          <div className="stat-icon">
-            <FaUsers />
-          </div>
-          <div className="stat-info">
-            <span className="stat-number">{stats.waiting}</span>
-            <span className="stat-label">En Espera</span>
-          </div>
-        </div>
-
-        <div className="stat-card attended">
-          <div className="stat-icon">
-            <FaCheckCircle />
-          </div>
-          <div className="stat-info">
-            <span className="stat-number">{stats.attended}</span>
-            <span className="stat-label">Finalizados</span>
-          </div>
-        </div>
-
-        <div className="stat-card total">
-          <div className="stat-icon">
-            <FaUserInjured />
-          </div>
-          <div className="stat-info">
-            <span className="stat-number">{stats.total}</span>
-            <span className="stat-label">Total Hoy</span>
+            <div className="header-stat">
+              <span className="stat-value">{stats.waiting}</span>
+              <span className="stat-label">En Espera</span>
+            </div>
+            <div className="header-stat">
+              <span className="stat-value">{stats.attended}</span>
+              <span className="stat-label">Atendidos</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="patients-queue">
-        <div className="queue-header-section">
-          <h3>Pacientes en Fila</h3>
-          <span className="queue-count">
-            {stats.waiting} pacientes esperando
-          </span>
-        </div>
+      {/* Panel Principal Compacto */}
+      <div className="main-panel">
+        {/* Sección de Control Principal */}
+        <div className="control-section">
+          <div className="current-turn-card">
+            <div className="turn-display">
+              <span className="turn-label">Turno Actual</span>
+              <span className="turn-number-large">
+                {queueData.currentTurn || "0"}
+              </span>
+            </div>
 
-        {patientsInQueue.length === 0 ? (
-          <div className="empty-queue">
-            <FaUsers className="empty-icon" />
-            <p>No hay pacientes en la fila virtual</p>
-          </div>
-        ) : (
-          <div className="patients-list">
-            {patientsInQueue.map((patient) => {
-              const isCurrent = patient.turnNumber === queueData.currentTurn;
-              const displayStatus =
-                isCurrent && patient.patientStatus !== "finalizada" // ✨ CORRECCIÓN CLAVE
-                  ? "en_consulta"
-                  : patient.patientStatus;
-
-              const visualClass = isCurrent ? "current" : "";
-
-              return (
-                <div
-                  key={patient.id}
-                  className={`patient-item ${displayStatus} ${visualClass}`}
-                >
-                  <div className="patient-turn">
-                    <span className="turn-number">#{patient.turnNumber}</span>
-                  </div>
-                  <div className="patient-info">
-                    <span className="patient-name">{patient.patientName}</span>
-                    <div className="patient-meta">
-                      <span className="checkin-time">
-                        {patient.checkInTime
-                          ?.toDate()
-                          .toLocaleTimeString("es-ES", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+            <div className="patient-display">
+              {currentPatientInConsultation ? (
+                <div className="current-patient">
+                  <div className="patient-info-compact">
+                    <div className="patient-name-section">
+                      <span className="patient-name">
+                        {currentPatientInConsultation.patientName}
+                      </span>
+                      <span className="patient-turn-badge">
+                        #{currentPatientInConsultation.turnNumber}
                       </span>
                     </div>
+                    <StatusBadge
+                      status={currentPatientInConsultation.patientStatus}
+                      isCurrent={true}
+                    />
                   </div>
-                  <div className="patient-status">
-                    <div className={`status-badge ${displayStatus}`}>
-                      {displayStatus === "en_consulta" && "🟡 En Consulta"}
-                      {displayStatus === "esperando" && "🔵 Esperando"}
-                      {/* ✨ CORRECCIÓN CLAVE: Mostrar "Finalizado" para el estado "finalizada" */}
-                      {displayStatus === "finalizada" && "⚪ Finalizado"}
+                  {currentPatientInConsultation.patientStatus ===
+                    "finalizada" && (
+                    <div className="completion-notice">
+                      <FaCheckCircle />
+                      <span>Listo para siguiente paciente</span>
                     </div>
+                  )}
+                </div>
+              ) : (
+                <div className="no-patient">
+                  <FaUsers className="no-patient-icon" />
+                  <div>
+                    <h3>Sin paciente en consulta</h3>
+                    <p>
+                      {queueData.lastAssignedTurn > queueData.currentTurn
+                        ? "Listo para llamar al siguiente paciente"
+                        : "No hay pacientes en la fila"}
+                    </p>
                   </div>
                 </div>
-              );
-            })}
+              )}
+            </div>
+
+            <button
+              className={`advance-btn ${
+                canAdvanceTurn ? "active" : "disabled"
+              }`}
+              onClick={handleAdvanceTurn}
+              disabled={!canAdvanceTurn || isAdvancing}
+            >
+              {isAdvancing ? (
+                <>
+                  <FaSync className="spinning" />
+                  <span>Avanzando...</span>
+                </>
+              ) : (
+                <>
+                  <FaChevronRight />
+                  <span>Siguiente Paciente</span>
+                </>
+              )}
+            </button>
+
+            {!canAdvanceTurn && currentPatientInConsultation && (
+              <div className="advance-hint">
+                <FaExclamationTriangle />
+                <span>Esperando que finalice la consulta actual</span>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Estadísticas Compactas */}
+          <div className="stats-section-compact">
+            <div className="section-title">
+              <FaUsers />
+              <span>Resumen del Día</span>
+            </div>
+            <div className="stats-grid-compact">
+              <StatCard
+                icon={<FaUserInjured />}
+                title="Total"
+                value={stats.total}
+                subtitle="Pacientes"
+                type="total"
+              />
+              <StatCard
+                icon={<FaUsers />}
+                title="En Espera"
+                value={stats.waiting}
+                subtitle="Pendientes"
+                type="waiting"
+              />
+              <StatCard
+                icon={<FaCheckCircle />}
+                title="Atendidos"
+                value={stats.attended}
+                subtitle="Completados"
+                type="attended"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Lista de Pacientes Compacta */}
+        <div className="patients-section-compact">
+          <div className="section-header-compact">
+            <div className="section-title">
+              <FaListAlt />
+              <span>Pacientes en Fila</span>
+              <span className="patient-count">({stats.waiting})</span>
+            </div>
+            <div className="queue-info">
+              <FaClock />
+              <span>Tiempo de espera</span>
+            </div>
+          </div>
+
+          <div className="patients-list-container-compact">
+            {patientsInQueue.length === 0 ? (
+              <div className="empty-queue-compact">
+                <FaUsers className="empty-icon" />
+                <h3>No hay pacientes en la fila</h3>
+                <p>Los pacientes aparecerán aquí cuando se registren</p>
+              </div>
+            ) : (
+              <div className="patients-list-compact">
+                {patientsInQueue.map((patient) => {
+                  const isCurrent =
+                    patient.turnNumber === queueData.currentTurn;
+                  return (
+                    <PatientItem
+                      key={patient.id}
+                      patient={patient}
+                      isCurrent={isCurrent}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
