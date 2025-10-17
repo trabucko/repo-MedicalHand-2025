@@ -1,0 +1,55 @@
+/* src/assets/components/Toolbar/Doctor/Update/UpdateDoctor.css */
+
+.update-doctor-container {
+  /* Puedes usar los mismos estilos base que create-doctor-container si quieres */
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Estilos para la sección de selección del doctor */
+.doctor-selection-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.doctor-selection-section label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.doctor-selection-section select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: #fff;
+}
+
+.form-note {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: -10px;
+    margin-left: 5px;
+}
+
+
+/* Reutiliza los estilos de tu formulario existente (.doctor-form, .input-group, etc.) */
+/* Si no los tienes en un archivo global, puedes copiarlos aquí desde CreateUserDoctorTool.css */
+.doctor-header h2 {
+    margin-bottom: 8px;
+}
+
+.doctor-header p {
+    color: #666;
+    margin-top: 0;
+}

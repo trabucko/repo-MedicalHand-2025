@@ -63,12 +63,7 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
     <div className="paciente-container">
       <header className="paciente-header">
         <div className="header-content">
-          <div className="patient-avatar">
-            <span>
-              {(personalInfo.firstName?.[0] || "") +
-                (personalInfo.lastName?.[0] || "") || "P"}
-            </span>
-          </div>
+          
           <div className="patient-main-info">
             <h1>{nombreCompleto || "Paciente no encontrado"}</h1>
             <p className="patient-id">ID: {personalInfo.idNumber || "N/A"}</p>
@@ -114,18 +109,8 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
         >
           Información de Solicitud
         </button>
-        <button
-          className={`tab ${activeTab === "documentos" ? "active" : ""}`}
-          onClick={() => setActiveTab("documentos")}
-        >
-          Documentos
-        </button>
-        <button
-          className={`tab ${activeTab === "citas" ? "active" : ""}`}
-          onClick={() => setActiveTab("citas")}
-        >
-          Historial de Citas
-        </button>
+ 
+     
       </nav>
 
       <div className="tab-content">
@@ -161,10 +146,7 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
                   <label>Teléfono</label>
                   <span>{contactInfo.phoneNumber || "N/A"}</span>
                 </div>
-                <div className="info-item">
-                  <label>Email</label>
-                  <span>{contactInfo.email || "N/A"}</span>
-                </div>
+               
                 <div className="info-item full-width">
                   <label>Dirección</label>
                   <span>{contactInfo.address || "N/A"}</span>
@@ -173,32 +155,7 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
             </div>
 
             {/* --- Tarjeta de Información Médica --- */}
-            <div className="info-card">
-              <div className="card-header">
-                <h3>Información Médica</h3>
-              </div>
-              <div className="card-content">
-                <div className="info-item">
-                  <label>Tipo de Sangre</label>
-                  <span>{medicalInfo.bloodType || "N/A"}</span>
-                </div>
-                <div className="info-item full-width">
-                  <label>Alergias Conocidas</label>
-                  <span>
-                    {medicalInfo.knownAllergies || "Ninguna reportada"}
-                  </span>
-                </div>
-                <div className="info-item full-width">
-                  <label>Enfermedades Crónicas</label>
-                  <span>
-                    {Array.isArray(medicalInfo.chronicDiseases) &&
-                    medicalInfo.chronicDiseases.length > 0
-                      ? medicalInfo.chronicDiseases.join(", ")
-                      : "Ninguna reportada"}
-                  </span>
-                </div>
-              </div>
-            </div>
+           
 
             {/* --- Tarjeta de Contacto de Emergencia --- */}
             <div className="info-card">
@@ -208,11 +165,11 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
               <div className="card-content">
                 <div className="info-item">
                   <label>Nombre</label>
-                  <span>{emergencyContact.name || "N/A"}</span>
+                  <span>{emergencyContact.name || "No Proveido"}</span>
                 </div>
                 <div className="info-item">
                   <label>Teléfono</label>
-                  <span>{emergencyContact.phoneNumber || "N/A"}</span>
+                  <span>{emergencyContact.phoneNumber || "No Proveido"}</span>
                 </div>
               </div>
             </div>

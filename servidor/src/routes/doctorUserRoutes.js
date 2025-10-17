@@ -3,7 +3,13 @@ import { body } from "express-validator";
 import { createDoctor } from "../controllers/createDoctorUserController.js";
 import { verifyAuth } from "../middlewares/authMiddleware.js";
 import { validateRequest } from "../middlewares/validationMiddleware.js";
-
+import {
+  
+  getAllDoctors,
+  getDoctorById,
+  updateDoctor,
+  disableDoctorAuth,
+} from "../controllers/createDoctorUserController.js";
 const router = express.Router();
 
 // Reglas de validación para crear un doctor
@@ -36,13 +42,18 @@ const createDoctorRules = [
     .withMessage("La especialidad es obligatoria."),
 ];
 
-// Ruta para crear un doctor
-router.post(
-  "/createDr",
-  verifyAuth, // Autentica al usuario
-  createDoctorRules, // Ejecuta reglas de validación
-  validateRequest, // Verifica errores de validación
-  createDoctor // Controlador que crea el doctor
-);
+// CREATE: Crear un nuevo doctor (la que ya tenías)
+router.post("/createDr", verifyAuth, createDoctorRules, validateRequest, createDoctor);
 
+// READ: Obtener todos los doctores (ESTA ES LA QUE TE FALTA)
+router.get("/all", verifyAuth, getAllDoctors);
+
+// READ: Obtener un doctor por su ID
+router.get("/:id", verifyAuth, getDoctorById);
+
+// UPDATE: Actualizar un doctor por su ID
+router.put("/update/:id", verifyAuth, updateDoctor); // Puedes añadir reglas de validación aquí si quieres
+
+// DELETE: Eliminar un doctor por su ID
+router.delete("/auth/:id", verifyAuth, disableDoctorAuth); 
 export default router;

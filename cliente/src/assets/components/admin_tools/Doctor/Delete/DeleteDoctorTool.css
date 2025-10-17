@@ -1,0 +1,89 @@
+/* src/assets/components/Toolbar/Doctor/Delete/DeleteDoctor.css */
+
+.delete-doctor-container {
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  max-width: 800px;
+  margin: 0 auto;
+  border-left: 5px solid #dc3545; /* Borde rojo para indicar peligro */
+}
+
+.delete-doctor-container .doctor-header p {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.selection-area,
+.action-area {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background-color: #fdf6f6;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+}
+
+.selection-area label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.selection-area select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.action-area p {
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.delete-button {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.delete-button:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.delete-button:disabled {
+  background-color: #e9a3a9;
+  cursor: not-allowed;
+}
+
+/* Clases para mensajes de error/éxito (si no las tienes globales) */
+.message {
+  padding: 1rem;
+  margin-top: 1.5rem;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}

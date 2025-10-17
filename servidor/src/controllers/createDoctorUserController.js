@@ -159,26 +159,38 @@ export const updateDoctor = async (req, res) => {
 };
 
 // DELETE (Acceso RÁPIDO y directo)
-export const deleteDoctor = async (req, res) => {
+export const disableDoctorAuth = async (req, res) => {
   try {
     const { id } = req.params;
     const authUser = req.user;
 
+    // 1. Referencia al documento (solo para verificar que existe)
     const doctorRef = db
       .collection("hospitales_MedicalHand")
       .doc(authUser.hospitalId)
       .collection("users")
       .doc(id);
 
+    // 2. Verificar que el doctor existe en Firestore antes de borrar su auth
     const doc = await doctorRef.get();
     if (!doc.exists || doc.data().role !== "hospital_doctor") {
       return res.status(404).json({ error: "Doctor no encontrado." });
     }
+
+    // 3. Eliminar la autenticación del usuario. ESTE ES EL ÚNICO PASO DE BORRADO.
     await authAdmin.deleteUser(id);
-    await doctorRef.delete();
-    return res.status(200).json({ message: "Doctor eliminado con éxito." });
+
+    // 4. No hacemos nada en Firestore. El documento se queda intacto.
+
+    return res
+      .status(200)
+      .json({ message: "La autenticación del doctor fue eliminada con éxito." });
   } catch (error) {
-    console.error("Error al eliminar el doctor:", error);
+    console.error("Error al eliminar la autenticación del doctor:", error);
+    // Manejar el caso en que el usuario de auth ya no exista
+    if (error.code === 'auth/user-not-found') {
+      return res.status(404).json({ error: "El usuario de autenticación no fue encontrado. Es posible que ya haya sido eliminado." });
+    }
     return res.status(500).json({ error: "Error interno del servidor." });
   }
 };
