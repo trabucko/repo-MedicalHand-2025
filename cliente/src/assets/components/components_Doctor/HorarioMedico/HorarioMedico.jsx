@@ -4,6 +4,8 @@ import { momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "moment/locale/es";
+import toast from 'react-hot-toast';
+
 const ScheduleModal = React.lazy(() =>
   import("./ScheduleModal").then((module) => ({
     default: module.ScheduleModal,
@@ -50,7 +52,6 @@ const HorarioMedico = ({
   const [view, setView] = useState("week");
   const [date, setDate] = useState(new Date());
 
-  // ✅ ================== INICIO DE LA ACTUALIZACIÓN ================== ✅
   // Esta lógica ahora procesará AMBOS tipos de horarios.
   const calendarEvents = useMemo(() => {
     // Esta lógica genera múltiples eventos para cada día de la semana para horarios recurrentes
@@ -149,6 +150,10 @@ const HorarioMedico = ({
   );
 
   const handleSelectSlot = useCallback(({ start, end }) => {
+    if (moment(start).isBefore(moment().startOf('day'))) {
+      toast.error("No puedes crear horarios en fechas pasadas.");
+      return; 
+    }
     setModalState({ type: "new", start, end });
   }, []);
 
@@ -164,72 +169,84 @@ const HorarioMedico = ({
 
   const handleSaveSchedule = useCallback(
     (dataFromModal) => {
-      // --- Lógica para Actualizar ---
-      if (dataFromModal.id) {
-        onUpdateSchedule(dataFromModal);
-        handleCloseModal();
-        return;
-      }
+      try {
+        // --- Lógica para Actualizar ---
+        if (dataFromModal.id) {
+          onUpdateSchedule(dataFromModal);
+          toast.success("Horario actualizado correctamente");
+          handleCloseModal();
+          return;
+        }
 
-      // --- Lógica para CREAR ---
-      if (dataFromModal.days && dataFromModal.days.length > 0) {
-        // CASO 1: Creando horarios recurrentes
-        const [startHour, startMinute] = dataFromModal.startTime
-          .split(":")
-          .map(Number);
-        const [endHour, endMinute] = dataFromModal.endTime
-          .split(":")
-          .map(Number);
-        const referenceDate = moment(modalState.start);
+        // --- Lógica para CREAR ---
+        if (dataFromModal.days && dataFromModal.days.length > 0) {
+          // CASO 1: Creando horarios recurrentes
+          const [startHour, startMinute] = dataFromModal.startTime
+            .split(":")
+            .map(Number);
+          const [endHour, endMinute] = dataFromModal.endTime
+            .split(":")
+            .map(Number);
+          const referenceDate = moment(modalState.start);
 
-        dataFromModal.days.forEach((day) => {
-          const dayIndex = momentDaysOfWeek.indexOf(day);
-          if (dayIndex === -1) return;
+          dataFromModal.days.forEach((day) => {
+            const dayIndex = momentDaysOfWeek.indexOf(day);
+            if (dayIndex === -1) return;
 
-          const targetDate = referenceDate.clone().isoWeekday(dayIndex + 1);
-          const newStart = targetDate
-            .clone()
-            .hour(startHour)
-            .minute(startMinute)
-            .second(0)
-            .toDate();
-          const newEnd = targetDate
-            .clone()
-            .hour(endHour)
-            .minute(endMinute)
-            .second(0)
-            .toDate();
+            const targetDate = referenceDate.clone().isoWeekday(dayIndex + 1);
+            const newStart = targetDate
+              .clone()
+              .hour(startHour)
+              .minute(startMinute)
+              .second(0)
+              .toDate();
+            const newEnd = targetDate
+              .clone()
+              .hour(endHour)
+              .minute(endMinute)
+              .second(0)
+              .toDate();
 
-          const newSchedule = {
-            start: newStart,
-            end: newEnd,
+            const newSchedule = {
+              start: newStart,
+              end: newEnd,
+              reason: dataFromModal.reason || "",
+              isAvailable: dataFromModal.isAvailable,
+            };
+            onAddSchedule(newSchedule);
+          });
+          toast.success(`Horarios recurrentes creados para ${dataFromModal.days.length} días`);
+        } else {
+          // CASO 2: Creando un evento único
+          const singleEvent = {
+            start: modalState.start,
+            end: modalState.end,
             reason: dataFromModal.reason || "",
-            // 👇 LÍNEA CLAVE 👇
             isAvailable: dataFromModal.isAvailable,
           };
-          onAddSchedule(newSchedule);
-        });
-      } else {
-        // CASO 2: Creando un evento único
-        const singleEvent = {
-          start: modalState.start,
-          end: modalState.end,
-          reason: dataFromModal.reason || "",
-          // 👇 LÍNEA CLAVE 👇
-          isAvailable: dataFromModal.isAvailable,
-        };
-        onAddSchedule(singleEvent);
-      }
+          onAddSchedule(singleEvent);
+          toast.success("Horario creado correctamente");
+        }
 
-      handleCloseModal();
+        handleCloseModal();
+      } catch (error) {
+        toast.error("Error al guardar el horario");
+        console.error("Error saving schedule:", error);
+      }
     },
     [modalState, onUpdateSchedule, onAddSchedule, handleCloseModal]
   );
 
   const handleDeleteSchedule = useCallback(
     (scheduleId) => {
-      onDeleteSchedule(scheduleId);
-      handleCloseModal();
+      try {
+        onDeleteSchedule(scheduleId);
+        toast.success("Horario eliminado correctamente");
+        handleCloseModal();
+      } catch (error) {
+        toast.error("Error al eliminar el horario");
+        console.error("Error deleting schedule:", error);
+      }
     },
     [onDeleteSchedule, handleCloseModal]
   );

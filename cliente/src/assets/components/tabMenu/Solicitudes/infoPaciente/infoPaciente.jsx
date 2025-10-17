@@ -46,11 +46,11 @@ const InfoPaciente = ({ solicitud, onClose, onGestionar }) => {
       case "pendiente":
         return "";
       case "confirmada":
-        return "✅";
+        return "Confirmada";
       case "cancelado":
-        return "❌";
+        return "Cancelado";
       default:
-        return "📋";
+        return "reprogramado";
     }
   };
 

@@ -72,7 +72,7 @@ const Solicitud = () => {
         // ▼▼▼ BLOQUE DE DEPURACIÓN PARA CADA SOLICITUD ▼▼▼
         try {
           const citaData = doc.data();
-          console.log("✅ 1. Datos de la CITA crudos:", citaData);
+          console.log(" 1. Datos de la CITA crudos:", citaData);
 
           let pacienteData = {};
           if (citaData.uid) {
@@ -83,7 +83,7 @@ const Solicitud = () => {
               pacienteData = userSnapshot.docs[0].data();
             }
           }
-          console.log("✅ 2. Datos del PACIENTE encontrados:", pacienteData);
+          console.log(" 2. Datos del PACIENTE encontrados:", pacienteData);
 
           const telefono =
             pacienteData.personalInfo?.phone ||
@@ -125,17 +125,17 @@ const Solicitud = () => {
             requiresFile: citaData.requiresFile === true,
           };
 
-          console.log("✅ 3. Objeto FINAL a mostrar:", solicitudProcesada);
+          console.log(" 3. Objeto FINAL a mostrar:", solicitudProcesada);
           return solicitudProcesada;
         } catch (error) {
           console.error(
-            "❌ ¡ERROR! No se pudo procesar la solicitud con ID:",
+            "¡ERROR! No se pudo procesar la solicitud con ID:",
             doc.id,
             error
           );
           return null; // Devolvemos null para que no rompa el resto
         }
-        // ▲▲▲ FIN DEL BLOQUE DE DEPURACIÓN ▲▲▲
+        //  FIN DEL BLOQUE DE DEPURACIÓN 
       });
 
       const solicitudesCompletas = await Promise.all(solicitudesPromises);
@@ -234,7 +234,7 @@ const Solicitud = () => {
   };
 
   // ===================================================================
-  // ▼▼▼ BARRERA DE CARGA ▼▼▼
+  //  BARRERA DE CARGA 
   if (!currentUser || !currentUser.hospitalId) {
     return (
       <div className="content-area">

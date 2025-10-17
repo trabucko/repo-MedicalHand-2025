@@ -6,6 +6,7 @@ import {
   Navigate,
   Outlet,
 } from "react-router-dom";
+import { Toaster } from 'react-hot-toast'; // ✅ Toaster importado
 
 // --- Contextos ---
 import { AuthProvider, useAuth } from "./assets/context/AuthContext.jsx";
@@ -138,6 +139,32 @@ function App() {
             {/* --- RUTA COMODÍN (Redirige cualquier URL no encontrada) --- */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          
+          {/* ✅ Toaster configurado a nivel global de la aplicación */}
+          <Toaster 
+            position="top-center" 
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                theme: {
+                  primary: 'green',
+                  secondary: 'black',
+                },
+              },
+              error: {
+                duration: 5000,
+                theme: {
+                  primary: 'red',
+                  secondary: 'black',
+                },
+              },
+            }}
+          />
         </Router>
       </AuthProvider>
     </LoadingProvider>

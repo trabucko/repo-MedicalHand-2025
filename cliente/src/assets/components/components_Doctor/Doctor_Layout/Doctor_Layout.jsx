@@ -43,7 +43,6 @@ const Sidebar = styled(OriginalSidebar)`
     transform: translateX(0);
   }
 
-  // ✨ CORRECCIÓN 1: En escritorio, siempre es visible.
   @media (min-width: 768px) {
     transform: translateX(0);
   }
@@ -54,7 +53,6 @@ const MainView = styled.div`
   display: flex;
   flex-direction: column;
   transition: margin-left 0.3s ease;
-  // ✨ CORRECCIÓN 2: El margen izquierdo SOLO se aplica en escritorio.
   @media (min-width: 768px) {
     margin-left: 0px;
   }
@@ -207,10 +205,7 @@ const DoctorLayout = () => {
   const [currentPatientDetails, setCurrentPatientDetails] = useState(null);
   const [queueId, setQueueId] = useState(null);
 
-  // ✨ 1. NUEVO ESTADO PARA EL ÚLTIMO PACIENTE ATENDIDO
   const [lastAttendedPatient, setLastAttendedPatient] = useState(null);
-
-  // ✨ 2. CREAR UNA REFERENCIA PARA RECORDAR EL TURNO ANTERIOR
   const previousTurnRef = useRef();
 
   const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
@@ -329,12 +324,10 @@ const DoctorLayout = () => {
     fetchFullAppointmentDetails();
   }, [patientFromQueue, selectedConsultorio, user?.hospitalId]);
 
-  // ✨ 3. REEMPLAZAR LA LÓGICA DE LIMPIEZA
-  // Este efecto ahora solo se fija en si el NÚMERO DE TURNO ha cambiado.
+  // Efecto para limpiar último paciente cuando cambia el turno
   useEffect(() => {
     const currentTurn = queueData?.currentTurn;
 
-    // Si hay un turno previo guardado y es DIFERENTE al actual, significa que el monitor avanzó la fila.
     if (
       previousTurnRef.current !== undefined &&
       previousTurnRef.current !== currentTurn
@@ -345,18 +338,17 @@ const DoctorLayout = () => {
       setLastAttendedPatient(null);
     }
 
-    // Actualizamos la referencia para la próxima vez que este efecto se ejecute.
     previousTurnRef.current = currentTurn;
-  }, [queueData?.currentTurn]); // Dependencia clave: solo el número de turno.
+  }, [queueData?.currentTurn]);
 
-  // ✨ 4. CALCULAR DATOS ADICIONALES PARA PASAR AL DASHBOARD
+  // Calcular datos adicionales para pasar al dashboard
   const waitingPatients = useMemo(() => {
     if (!patientsInQueue.length) return [];
 
     return patientsInQueue
       .filter((p) => p.patientStatus === "esperando")
       .sort((a, b) => a.turnNumber - b.turnNumber)
-      .slice(0, 10); // Limitar a los próximos 10 pacientes
+      .slice(0, 10);
   }, [patientsInQueue]);
 
   const queueStats = useMemo(() => {
@@ -466,7 +458,7 @@ const DoctorLayout = () => {
     }
   };
 
-  // ✨ 5. ACTUALIZAR LA FUNCIÓN PARA FINALIZAR CONSULTA
+  // ✅ FUNCIÓN ACTUALIZADA PARA FINALIZAR CONSULTA (TRES COLECCIONES)
   const handleFinalizeConsultation = async () => {
     if (
       !currentPatientDetails?.id ||
@@ -480,6 +472,9 @@ const DoctorLayout = () => {
 
     const patientToFinalize = { ...currentPatientDetails };
     const queueDocId = queueId;
+    const appointmentId = patientToFinalize.appointmentId;
+
+    // Referencia al paciente en la fila virtual
     const patientDocRef = doc(
       db,
       "filas_virtuales",
@@ -489,12 +484,55 @@ const DoctorLayout = () => {
     );
 
     try {
-      await updateDoc(patientDocRef, { patientStatus: "finalizada" });
+      // 1. Actualiza el estado del paciente en la FILA VIRTUAL
+      await updateDoc(patientDocRef, { 
+        patientStatus: "finalizada",
+        finalizedAt: serverTimestamp()
+      });
+      console.log("✅ Estado actualizado en fila virtual");
+
+      // 2. Actualiza el estado en la CITA DEL CONSULTORIO (hospitales_MedicalHand/...)
+      if (appointmentId && selectedConsultorio?.id) {
+        const appointmentInOfficeDocRef = doc(
+          db,
+          "hospitales_MedicalHand",
+          user.hospitalId,
+          "dr_office",
+          selectedConsultorio.id,
+          "appointments",
+          appointmentId
+        );
+        await updateDoc(appointmentInOfficeDocRef, { 
+          status: "finalizada",
+          finalizedAt: serverTimestamp()
+        });
+        console.log("✅ Estado de la cita actualizado a 'finalizada' en el consultorio");
+      } else {
+        console.warn(
+          "⚠️ No se pudo actualizar la cita del consultorio - falta appointmentId o consultorio."
+        );
+      }
+      
+      // 3. Actualiza el estado en la COLECCIÓN PRINCIPAL 'citas'
+      if (appointmentId) {
+        const mainAppointmentDocRef = doc(db, "citas", appointmentId);
+        await updateDoc(mainAppointmentDocRef, { 
+          status: "finalizada",
+          finalizedAt: serverTimestamp()
+        });
+        console.log("✅ Estado de la cita actualizado a 'finalizada' en la colección principal 'citas'");
+      } else {
+        console.warn("⚠️ No se pudo actualizar la cita principal - falta appointmentId.");
+      }
+
+      // 4. Actualizar el estado local
       setLastAttendedPatient(patientToFinalize);
-      // La siguiente línea fue eliminada:
-      // alert("Consulta finalizada. Esperando al siguiente paciente.");
+      
+      // ✅ Opcional: Notificación de éxito
+      // toast.success("Consulta finalizada exitosamente en todas las colecciones");
+
     } catch (error) {
-      console.error("Error al finalizar la consulta:", error);
+      console.error("❌ Error al finalizar la consulta en todas las colecciones:", error);
       alert("Hubo un error al marcar la consulta como finalizada.");
     }
   };
@@ -538,7 +576,6 @@ const DoctorLayout = () => {
         handleLogout={handleLogoutClick}
       />
       <LayoutContainer>
-        {/* ✨ CORRECCIÓN 3: Ya no se necesita la clase dinámica aquí */}
         <MainView>
           <Header
             user={user}
@@ -558,7 +595,6 @@ const DoctorLayout = () => {
                 queueStats: queueStats,
                 queueData: queueData,
                 allPatientsInQueue: patientsInQueue,
-                // ✨ 6. PASAR EL NUEVO ESTADO AL CONTEXTO
                 lastAttendedPatient: lastAttendedPatient,
               }}
             />

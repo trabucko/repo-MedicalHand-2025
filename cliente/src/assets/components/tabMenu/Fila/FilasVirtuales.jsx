@@ -401,7 +401,7 @@ const FilasVirtuales = () => {
               ) : (
                 <>
                   <FaChevronRight />
-                  <span>Siguiente Paciente</span>
+                  <span className="btn-sig-pac">Siguiente Paciente</span>
                 </>
               )}
             </button>
