@@ -1,5 +1,8 @@
-// src/config/firebaseAdmin.js
-import admin from "firebase-admin";
+// src/config/firebaseAdmin.js (CORREGIDO)
+import { initializeApp, cert, getApps } from "firebase-admin/app"; // 1. CAMBIO DE IMPORTS
+import { getFirestore } from "firebase-admin/firestore"; // 2. CAMBIO DE IMPORTS
+import { getAuth } from "firebase-admin/auth"; // 3. CAMBIO DE IMPORTS
+
 import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -13,11 +16,13 @@ const serviceAccount = JSON.parse(
   readFileSync(join(__dirname, "serviceAccountKey.json"), "utf8")
 );
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+// 4. CAMBIO DE INICIALIZACIÓN
+if (!getApps().length) {
+  initializeApp({
+    credential: cert(serviceAccount),
   });
 }
 
-export const db = admin.firestore();
-export const authAdmin = admin.auth();
+// 5. CAMBIO EN LAS EXPORTACIONES
+export const db = getFirestore("medicalhand"); // <-- ¡LA SOLUCIÓN!
+export const authAdmin = getAuth();

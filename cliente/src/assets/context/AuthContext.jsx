@@ -1,12 +1,14 @@
-// src/assets/context/AuthContext.jsx (Versión Adaptada)
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-import { auth, app } from "../../firebase.js";
+// 1. Ya no importamos 'getFirestore' aquí
+import { doc, getDoc } from "firebase/firestore";
+// 2. Importamos 'db' (el correcto) en lugar de 'app'
+import { auth, db } from "../../firebase.js";
 import { useLoading } from "./LoadingContext.jsx";
 
-const db = getFirestore(app);
+// 3. ¡Eliminamos la línea 'const db = getFirestore(app);'!
+//    Ahora usaremos la 'db' que importamos de firebase.js
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -46,7 +48,7 @@ export function AuthProvider({ children }) {
           // --- CAMBIO CLAVE AQUÍ ---
           // Ahora buscamos el documento del usuario dentro de la subcolección de su hospital.
           const userDocRef = doc(
-            db,
+            db, // <-- Esta 'db' ahora SÍ es la correcta de 'medicalhand'
             "hospitales_MedicalHand",
             claims.hospitalId, // Usamos el ID del hospital...
             "users", // ...para llegar a la subcolección 'users'...
@@ -70,7 +72,7 @@ export function AuthProvider({ children }) {
 
           // La lógica para obtener los datos del hospital no cambia.
           const hospitalDocRef = doc(
-            db,
+            db, // <-- Esta 'db' también es la correcta
             "hospitales_MedicalHand",
             claims.hospitalId
           );

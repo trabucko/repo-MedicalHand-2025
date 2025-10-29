@@ -421,3 +421,20 @@
 .google-modal-content {
   -webkit-tap-highlight-color: transparent;
 }
+
+/*
+ * LA SOLUCIÓN:
+ * Forzar el color del texto dentro del botón activo.
+*/
+.google-day-active .google-day-initial,
+.google-day-active .google-day-full {
+  color: white;
+}
+
+/* * MEJORA OPCIONAL:
+ * El texto pequeño ('Lunes', 'Martes', etc.) tenía opacidad. 
+ * Lo ponemos en 1 (opacidad total) cuando está activo para que se vea más nítido.
+*/
+.google-day-active .google-day-full {
+  opacity: 1;
+}
