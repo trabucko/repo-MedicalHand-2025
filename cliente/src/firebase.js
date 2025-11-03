@@ -17,7 +17,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app, "medicalhand");
+const db = getFirestore(app);
 const storage = getStorage(app);
 
 // Exporta todo junto al final
